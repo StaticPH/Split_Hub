@@ -11,7 +11,6 @@ from Common import *
 
 warnings.warn("Compiling SettingsControl")
 
-
 # Section####################################### Start Settings Handling ###############################################
 class settingsManager(QDialog):
 	def __init__ (self):
@@ -30,6 +29,7 @@ class settingsManager(QDialog):
 		# self.show=self.appPreferences()
 		print("type of settingsManager is: " + str(type(self)))
 		print("type of settingsManager.settingsFile is :" + str(type(self.settingsFile)))
+		pass
 		# print(self.settingsFile.allKeys())
 		# print("settingsFile: " + str(type(self.settingsFile)))
 		# print("settingsFile: " + str(type(self.getSettingsFile())))
@@ -93,7 +93,6 @@ class settingsManager(QDialog):
 					else:
 						print("Setting \"" + setting.cfgName + "\" matches no handled type. Its type is " + str(type(setting)))
 
-		print("path:" + self.settingsFile.fileName())
 		# settingsPage.update()
 		parentLayout = QVBoxLayout()
 
@@ -166,6 +165,14 @@ class settingsManager(QDialog):
 		settingsPage.setLayout(parentLayout)
 		settingsPage.show();
 
+	# responses.receivers(PYQT_SIGNAL = accResp)
+	# responses.clicked(responses.apply)
+	# responses.isSignalConnected(responses.clicked(responses.apply))
+	# if responses.clicked(QAbstractButton = apply):print("YES")
+	# settingsPage.closeEvent()
+	# QDialog.customEvent(),event,eventFilter, installEventFilter, leaveEvent,mask, showEvent, signalsBlocked
+	# responses.finished.connect(something to save?)???     sender      senderSignalIndex       result? signals?
+	##something that saves preferences when the OK button is pressed
 	def initSettings (self):
 		# NOTE:Is toolbar moveable or locked in place. Is it floatable. Maybe if i figure out how to let the user adjust contents,
 		# NOTE: add an option to disable that ability? Enable/disable certain widgets?
@@ -244,15 +251,6 @@ class settingsManager(QDialog):
 		if type(cfgWindowGeometry) is None or cfgWindowGeometry == "\n" or cfgWindowGeometry == "":
 			config.setValue("mainWindowGeometry", defaultWindowGeometry)
 			print("Defaulting geometry")
-
-		# settings=settingsManager
-		# def initSettings():
-		# settings = settingsManager()
-		# settings.initSettings()
-		# return settings.settingsFile
-		# def appPreferences():
-		# return settings.appPreferences
-
 
 if __name__ == "__main__":
 	import sys
