@@ -1,47 +1,45 @@
 from PyQt5.QtWidgets import (
 	QPushButton, QAction, QLabel, QCheckBox, QComboBox, QHBoxLayout,
 	QVBoxLayout, QTabWidget, QWidget, QDialog, QDialogButtonBox,
-	QStyleFactory, QGridLayout, QLineEdit, QActionGroup, QGroupBox)
+	QStyleFactory, QGridLayout, QLineEdit, QActionGroup, QGroupBox
+)
+
 from PyQt5.QtCore import (Qt, QObject, QSettings)
-# from MainWindow import (
-# window, extendedBools, extendedFalsehoods, extendedTruths, statusTips, validStyles,
-# defaultWindowGeometry,
-# testPrint)
+
 import warnings
+from Common import *
 
 warnings.warn("Compiling SettingsControl")
-import Common
-
-defaultWindowGeometry = Common.defaultWindowGeometry
-extendedBools = Common.extendedBools
-extendedFalsehoods = Common.extendedFalsehoods
-extendedTruths = Common.extendedTruths
-statusTips = Common.statusTips
-validStyles = Common.validStyles
-testPrint = Common.testPrint
-wrapper = Common.wrapper
-
 
 # Section####################################### Start Settings Handling ###############################################
 class settingsManager(QDialog):
 	def __init__ (self):
 		super(settingsManager, self).__init__()
-		self.settingsFile = QSettings("D:\Projects\Python\SwitchBoard\MySwitchboard.cfg", QSettings.IniFormat)
+
+		self.settingsFile = QSettings(
+				"D:\Projects\Python\SwitchBoard\MySwitchboard.cfg",
+				QSettings.IniFormat
+		)
+		
 		self.settingsFile.setPath(
-				QSettings.IniFormat, QSettings.UserScope, "D:\Projects\Python\SwitchBoard\MySwitchboard.cfg"
+				QSettings.IniFormat,
+				QSettings.UserScope,
+				"D:\Projects\Python\SwitchBoard\MySwitchboard.cfg"
 		)
 		# self.show=self.appPreferences()
 		print("type of settingsManager is: " + str(type(self)))
 		print("type of settingsManager.settingsFile is :" + str(type(self.settingsFile)))
-		pass
 		# print(self.settingsFile.allKeys())
 		# print("settingsFile: " + str(type(self.settingsFile)))
 		# print("settingsFile: " + str(type(self.getSettingsFile())))
 		pass
 
-	def getSettingsFile (self):return self.settingsFile
+	def getSettingsFile (self):
+		return self.settingsFile
+
 	def appPreferences (self):
 		print("Preferences selected")
+
 		settingsPage = self
 		config = self.settingsFile
 		print(str(type(config)))
@@ -53,7 +51,8 @@ class settingsManager(QDialog):
 			box = QCheckBox(text, self)
 			box.stateChanged.connect(self.updatePreview)
 
-			def Link (): wrapper(testPrint, "Flag Toggled").call()
+			def Link ():
+				wrapper(testPrint, "Flag Toggled").call()
 
 			box.stateChanged.connect(Link)
 			return box
@@ -61,7 +60,8 @@ class settingsManager(QDialog):
 		# Refresh field values
 		def getCurrentValues ():
 			for setting in settingsList:
-				if setting.isModified():  # TODO:Handle different types, consider handling special cases
+				# TODO: Handle different types, consider handling special cases
+				if setting.isModified(): 
 					print(setting.cfgName + " has been changed. Refreshing field value.")
 					if type(setting) == QLineEdit:
 						setting.setText(config.value(setting.cfgName))
@@ -78,8 +78,10 @@ class settingsManager(QDialog):
 		# Update config file contents to match field values
 		def updateModifiedValues ():
 			for setting in settingsList:
-				if setting.isModified():  # TODO:Handle different types, consider handling special cases
+				# TODO:Handle different types, consider handling special cases
+				if setting.isModified():
 					print(setting.cfgName + " has been modified. Now saving.")
+
 					if type(setting) == QLineEdit:
 						config.setValue(setting.cfgName, setting.text())
 					elif type(setting) == QCheckBox:
@@ -91,7 +93,6 @@ class settingsManager(QDialog):
 						print("Setting \"" + setting.cfgName + "\" matches no handled type. Its type is " + str(type(setting)))
 
 		# settingsPage.update()
-		# self.showEvent, update
 		parentLayout = QVBoxLayout()
 
 		# something to get the saved preferences
@@ -102,10 +103,10 @@ class settingsManager(QDialog):
 
 		def accResp ():
 			wrapper(testPrint, "Accepting Changes...").call()
+
 			# Check for and save any changed settings
 			updateModifiedValues()
 			# print(winTitle.text()); #text, textChanged, textEdited, setValidator, setText. setTooltip. QLineEdit,displayText
-			# settingsPage.accept()
 			config.sync()
 
 		def rejResp ():
@@ -127,6 +128,7 @@ class settingsManager(QDialog):
 		# Using this to allow an OK and an Accept button with separate resulting operations
 		def onClicked ():
 			sender = self.sender()
+
 			if sender.text() == "Accept Changes":
 				accResp()
 			elif sender.text() == "Discard Changes":
@@ -159,18 +161,9 @@ class settingsManager(QDialog):
 		parentLayout.addLayout(horiz1)
 
 		parentLayout.addWidget(responses)
-		# parentLayout.insertStretch(0)
 		settingsPage.setLayout(parentLayout)
 		settingsPage.show();
 
-	# responses.receivers(PYQT_SIGNAL = accResp)
-	# responses.clicked(responses.apply)
-	# responses.isSignalConnected(responses.clicked(responses.apply))
-	# if responses.clicked(QAbstractButton = apply):print("YES")
-	# settingsPage.closeEvent()
-	# QDialog.customEvent(),event,eventFilter, installEventFilter, leaveEvent,mask, showEvent, signalsBlocked
-	# responses.finished.connect(something to save?)???     sender      senderSignalIndex       result? signals?
-	##something that saves preferences when the OK button is pressed
 	def initSettings (self):
 		# NOTE:Is toolbar moveable or locked in place. Is it floatable. Maybe if i figure out how to let the user adjust contents,
 		# NOTE: add an option to disable that ability? Enable/disable certain widgets?
@@ -185,22 +178,22 @@ class settingsManager(QDialog):
 		if str(config.value("primaryStyle")).capitalize().replace(" ", "") not in validStyles:
 			config.setValue("primaryStyle", "Windows Vista")
 			print("Resetting style to hard default")
-		# self.themeControl(str(config.value("primaryStyle")).replace(" ", ""))  # Sets the window style to the configured value
 
 		# Main Toolbar Configs
 		config.beginGroup("MainToolbar")
+
 		cfgMainToolBarPos = config.value("mainToolBarPosition")
 		if cfgMainToolBarPos == "\n" or cfgMainToolBarPos not in ["1", "2", "4", "8"]:
 			config.setValue("mainToolBarPosition", Qt.LeftToolBarArea)  # Default toolbar position is on the left side
 
 		cfgMainToolBarMoveable = config.value("isMainToolBarMovable")
-		# if cfgMainToolBarMoveable == "\n" or type(cfgMainToolBarMoveable)!=bool:
 		if cfgMainToolBarMoveable not in extendedBools:
 			config.setValue("isMainToolBarMovable", True)  # Main toolbar is movable by default
 		elif cfgMainToolBarMoveable in [1, "t", "T", "true", "True"]:
 			config.setValue("isMainToolBarMovable", True)
 		elif cfgMainToolBarMoveable in [0, "f", "F", "false", "False"]:
 			config.setValue("isMainToolBarMovable", False)
+
 		cfgMainToolBarFloatable = config.value("isMainToolBarFloatable")
 		if cfgMainToolBarFloatable not in extendedBools:
 			config.setValue("isMainToolBarFloatable", True)  # Main toolbar is floatable by default
@@ -208,10 +201,12 @@ class settingsManager(QDialog):
 			config.setValue("isMainToolBarFloatable", True)
 		elif cfgMainToolBarFloatable in [0, "f", "F", "false", "False"]:
 			config.setValue("isMainToolBarFloatable", False)
+
 		config.endGroup()
 
 		# TODO: Add checkboxes for these to config manager
 		config.beginGroup("WindowFlags")
+
 		cfgKeepOnTop = config.value("cfgKeepOnTop")
 		if cfgKeepOnTop not in extendedBools:
 			config.setValue("cfgKeepOnTop", False)
@@ -219,6 +214,7 @@ class settingsManager(QDialog):
 			config.setValue("cfgKeepOnTop", True)
 		elif cfgKeepOnTop in [0, "f", "F", "false", "False"]:
 			config.setValue("cfgKeepOnTop", False)
+
 		cfgIsWindowFrameless = config.value("cfgIsFrameless")
 		if cfgIsWindowFrameless not in extendedBools:
 			config.setValue("cfgIsFrameless", False)
@@ -227,32 +223,33 @@ class settingsManager(QDialog):
 		elif cfgIsWindowFrameless in [0, "f", "F", "false", "False"]:
 			config.setValue("cfgIsFrameless", False)
 
-		if (config.value("cfgKeepOnTop")) == True:    flags |= Qt.WindowStaysOnTopHint
-		if (config.value("cfgIsFrameless")) == True:    flags |= Qt.FramelessWindowHint
+		if (config.value("cfgKeepOnTop")) == True:
+			flags |= Qt.WindowStaysOnTopHint
+		if (config.value("cfgIsFrameless")) == True:
+			flags |= Qt.FramelessWindowHint
+		
 		self.setWindowFlags(flags)
+
 		config.endGroup()
 
 		# Other Configs
 		cfgTitle = config.value("cfgWindowTitle")
-		if cfgTitle == "\n":     config.setValue("cfgWindowTitle", "I am a window")
+		if cfgTitle == "\n":
+			config.setValue("cfgWindowTitle", "I am a window")
 
 		# Makes sure that default window geometry value is available in case there isn't one in the config
 		cfgWindowGeometry = config.value("mainWindowGeometry")
 		if type(cfgWindowGeometry) is None or cfgWindowGeometry == "\n" or cfgWindowGeometry == "":
 			config.setValue("mainWindowGeometry", defaultWindowGeometry)
 			print("Defaulting geometry")
-		# if cfgWindowGeometry=='\n':print("IS BLANK")
-		else:
-			# print("Geo: "+str((type(cfgWindowGeometry)))); print(cfgWindowGeometry)
-			pass
 
-settings=settingsManager
-def initSettings():
-	settings = settingsManager()
-	settings.initSettings()
-	return settings.settingsFile
-def appPreferences():
-	return settings.appPreferences
+		# settings=settingsManager
+		# def initSettings():
+		# settings = settingsManager()
+		# settings.initSettings()
+		# return settings.settingsFile
+		# def appPreferences():
+		# return settings.appPreferences
 
 if __name__ == "__main__":
 	import sys
@@ -260,23 +257,8 @@ if __name__ == "__main__":
 
 	app = QApplication(sys.argv)
 	app.setApplicationName("SettingsControl")
-	# app.setApplicationDisplayName("My Switchboard")
+
 	display = settingsManager()
 
-	# print("Module: " + settingsManager.__module__.__str__())
-	# print("Class name: " + settingsManager.__class__.__name__)
-	# print("Doc: " + settingsManager.__doc__.__str__())
-	# print("Dict: " + settingsManager.__dict__.__str__())
-	# print("Dir: " + __name__.settingsManager.__dir__().__str__())
-
-	# print(dir(settingsManager.__class__))
 	display.appPreferences()
 	sys.exit(app.exec_())
-
-
-
-	# print("Module: " + self.__module__.__str__())
-	# print("Class name: " + self.__class__.__name__)
-	# print("Doc: " + self.__doc__.__str__())
-	# print("Dict: " + self.__dict__.__str__())
-	# print("Dir: " + self.__dir__().__str__())
