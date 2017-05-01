@@ -26,6 +26,10 @@ class settingsManager(QDialog):
 				QSettings.UserScope,
 				"MySwitchboard.cfg"
 		)
+		# self.windowFlags()
+		# flags = Qt.WindowFlags()
+		# flags = Qt.Dialog
+		# self.setWindowFlags(flags)
 		# self.show=self.appPreferences()
 		print("type of settingsManager is: " + str(type(self)))
 		print("type of settingsManager.settingsFile is :" + str(type(self.settingsFile)))
@@ -43,7 +47,7 @@ class settingsManager(QDialog):
 
 		settingsPage = self
 		config = self.settingsFile
-		print(str(type(config)))
+		# print(str(type(config)))
 
 		self.setWindowTitle("Settings")
 
@@ -163,7 +167,7 @@ class settingsManager(QDialog):
 
 		parentLayout.addWidget(responses)
 		settingsPage.setLayout(parentLayout)
-		settingsPage.show();
+		settingsPage.show()
 
 	# responses.receivers(PYQT_SIGNAL = accResp)
 	# responses.clicked(responses.apply)
@@ -173,14 +177,27 @@ class settingsManager(QDialog):
 	# QDialog.customEvent(),event,eventFilter, installEventFilter, leaveEvent,mask, showEvent, signalsBlocked
 	# responses.finished.connect(something to save?)???     sender      senderSignalIndex       result? signals?
 	##something that saves preferences when the OK button is pressed
+	def updateFlags (self):
+		config = self.settingsFile
+		self.windowFlags()
+		flags = Qt.WindowFlags()
+		flags = Qt.Dialog  # Without this line, when MainWindow.window is set as parent, anything that would be displayed in its own dialog
+		# by appPreferences is instead confined to the geometry of window
+
+		# None of this part should apply to the settings window
+		if (config.value("cfgKeepOnTop")) == True:
+			flags |= Qt.WindowStaysOnTopHint
+		if (config.value("cfgIsFrameless")) == True:
+			flags |= Qt.FramelessWindowHint
+
+		self.setWindowFlags(flags)
+
 	def initSettings (self):
 		# NOTE:Is toolbar moveable or locked in place. Is it floatable. Maybe if i figure out how to let the user adjust contents,
 		# NOTE: add an option to disable that ability? Enable/disable certain widgets?
 		# TODO: Figure out how to add descriptive text into the config file, if at all possible
 
 		config = self.settingsFile  # test=config.setValue("test", 3);    print("test=" + str(config.value("test")))
-		self.windowFlags()
-		flags = Qt.WindowFlags()
 
 		# Style Configs
 		cfgStyle = config.value("primaryStyle")
@@ -219,25 +236,20 @@ class settingsManager(QDialog):
 		cfgKeepOnTop = config.value("cfgKeepOnTop")
 		if cfgKeepOnTop not in extendedBools:
 			config.setValue("cfgKeepOnTop", False)
-		elif cfgKeepOnTop in [1, "t", "T", "true", "True"]:
-			config.setValue("cfgKeepOnTop", True)
 		elif cfgKeepOnTop in [0, "f", "F", "false", "False"]:
 			config.setValue("cfgKeepOnTop", False)
+		elif cfgKeepOnTop in [1, "t", "T", "true", "True"]:
+			config.setValue("cfgKeepOnTop", True)
 
 		cfgIsWindowFrameless = config.value("cfgIsFrameless")
 		if cfgIsWindowFrameless not in extendedBools:
 			config.setValue("cfgIsFrameless", False)
-		elif cfgIsWindowFrameless in [1, "t", "T", "true", "True"]:
-			config.setValue("cfgIsFrameless", True)
 		elif cfgIsWindowFrameless in [0, "f", "F", "false", "False"]:
 			config.setValue("cfgIsFrameless", False)
+		elif cfgIsWindowFrameless in [1, "t", "T", "true", "True"]:
+			config.setValue("cfgIsFrameless", True)
 
-		if (config.value("cfgKeepOnTop")) == True:
-			flags |= Qt.WindowStaysOnTopHint
-		if (config.value("cfgIsFrameless")) == True:
-			flags |= Qt.FramelessWindowHint
-
-		self.setWindowFlags(flags)
+		self.updateFlags()
 
 		config.endGroup()
 
@@ -265,3 +277,8 @@ if __name__ == "__main__":
 	display.initSettings()
 	display.appPreferences()
 	sys.exit(app.exec_())
+
+
+	# Known Bugs:
+	# ---Opening the settings window the first time, the "Window Title:" label appears on top of the tab bar. After the first time, the label
+	#	is hidden underneath the tab bar, although it can be unobscured by resizing the window to move it

@@ -37,7 +37,18 @@ class window(QMainWindow):
 
 		# Configs
 		self.settingsMan = SettingsControl.settingsManager()
+		self.settingsMan.setParent(self)
 		self.settingsMan.initSettings()
+		self.windowFlags()  # WIP
+		self.settingsMan.updateFlags()
+		flags = Qt.WindowFlags()  # WIP
+		# print("Window type mask= " + str(flags & Qt.WindowType_Mask.__class__.__qualname__))		#WIP
+		if flags & Qt.WindowStaysOnTopHint:
+			print("Window should be staying on top")  # WIP
+		else:
+			print("Flags not set")  # WIP
+		# print(str(flags))		#WIP
+		# print(str(self.windowFlags()))		#WIP
 
 		self.settings = self.settingsMan.settingsFile
 
@@ -111,7 +122,7 @@ class window(QMainWindow):
 		# otherwise it will end up being rendered behind the pageBar
 		# self.setCentralWidget()
 
-		tempPref = self.basicButton('Options', self.settingsMan.appPreferences(), None, 300, 300)
+		tempPref = self.basicButton('Options', self.settingsMan.appPreferences, None, 300, 300)
 
 		if self.settings.value("mainWindowGeometry"):
 			self.restoreGeometry(self.settings.value("mainWindowGeometry"))
@@ -300,7 +311,7 @@ class window(QMainWindow):
 		mainMenu = self.menuBar()
 
 		# Make menu items
-		prefs = self.menuItem(self.settingsMan.appPreferences(), "Preferences", "View and edit application settings")
+		prefs = self.menuItem(self.settingsMan.appPreferences, "Preferences", "View and edit application settings")
 		prefs.setMenuRole(QAction.PreferencesRole)
 
 		styleGroup = QActionGroup(mainMenu)
