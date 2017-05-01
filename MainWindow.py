@@ -39,16 +39,16 @@ class window(QMainWindow):
 		self.settingsMan = SettingsControl.settingsManager()
 		self.settingsMan.setParent(self)
 		self.settingsMan.initSettings()
-		self.windowFlags()  # WIP
-		self.settingsMan.updateFlags()
+		self.windowFlags()  # WIP													# WIP
+		self.settingsMan.updateFlags()  # WIP
 		flags = Qt.WindowFlags()  # WIP
-		# print("Window type mask= " + str(flags & Qt.WindowType_Mask.__class__.__qualname__))		#WIP
-		if flags & Qt.WindowStaysOnTopHint:
+		# print("Window type mask= " + str(flags & Qt.WindowType_Mask.__class__.__qualname__))				# WIP
+		if flags & Qt.WindowStaysOnTopHint:  # WIP
 			print("Window should be staying on top")  # WIP
-		else:
+		else:  # WIP
 			print("Flags not set")  # WIP
-		# print(str(flags))		#WIP
-		# print(str(self.windowFlags()))		#WIP
+		# print(str(flags))																					# WIP
+		# print(str(self.windowFlags()))																	# WIP
 
 		self.settings = self.settingsMan.settingsFile
 
@@ -135,7 +135,7 @@ class window(QMainWindow):
 
 	# Declare application wide Actions
 	# noinspection PyUnresolvedReferences,PyAttributeOutsideInit
-	def declareActions (self):  # WIP
+	def declareActions (self):  # WIP		#TODO: Consider shifting this to Common
 		# Cut
 		self.actCut = QAction("Cu&t", self)
 		self.actCut.setShortcut("Ctrl+x")
@@ -449,7 +449,6 @@ class window(QMainWindow):
 def endProgram ():
 	print("Goodbye")
 	sys.exit()
-
 
 def testPrint (text = "Debug"):
 	print(text)

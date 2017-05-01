@@ -31,12 +31,16 @@ class settingsManager(QDialog):
 		# flags = Qt.Dialog
 		# self.setWindowFlags(flags)
 		# self.show=self.appPreferences()
+		self.resize(500, 500)  # TEMPORARY
+		if __name__ == "__main__":  # TEMPORARY
+			actQuit = QAction("&Quit", self)
+			actQuit.setShortcut("Ctrl+q")
+			actQuit.triggered.connect(sys.exit)
+			self.addAction(actQuit)
 		print("type of settingsManager is: " + str(type(self)))
 		print("type of settingsManager.settingsFile is :" + str(type(self.settingsFile)))
 		pass
 		# print(self.settingsFile.allKeys())
-		# print("settingsFile: " + str(type(self.settingsFile)))
-		# print("settingsFile: " + str(type(self.getSettingsFile())))
 		pass
 
 	def getSettingsFile (self):
@@ -45,9 +49,8 @@ class settingsManager(QDialog):
 	def appPreferences (self):
 		print("Preferences selected")
 
-		settingsPage = self
+		settingsPage = self  # TODO: remove this, because its completely unnecessary, and just replace all settingsPage with self
 		config = self.settingsFile
-		# print(str(type(config)))
 
 		self.setWindowTitle("Settings")
 
@@ -62,7 +65,7 @@ class settingsManager(QDialog):
 			box.stateChanged.connect(Link)
 			return box
 
-		# Refresh field values
+		# Refresh field values		#TODO: FIND A BETTER WAY THAN THIS
 		def getCurrentValues ():
 			for setting in settingsList:
 				# TODO: Handle different types, consider handling special cases
@@ -80,7 +83,7 @@ class settingsManager(QDialog):
 					else:
 						print("Setting \"" + setting.cfgName + "\" matches no handled type. Its type is " + str(type(setting)))
 
-		# Update config file contents to match field values
+		# Update config file contents to match field values		#TODO: FIND A BETTER WAY THAN THIS
 		def updateModifiedValues ():
 			for setting in settingsList:
 				# TODO:Handle different types, consider handling special cases
@@ -100,7 +103,7 @@ class settingsManager(QDialog):
 		# settingsPage.update()
 		parentLayout = QVBoxLayout()
 
-		# something to get the saved preferences
+		#Create the 3 possible responses to the dialog
 		responses = QDialogButtonBox(QDialogButtonBox.NoButton, Qt.Horizontal)
 		responses.apply = responses.addButton("Accept Changes", QDialogButtonBox.AcceptRole)
 		responses.good = responses.addButton("Okay", QDialogButtonBox.ActionRole)
@@ -141,6 +144,7 @@ class settingsManager(QDialog):
 			elif sender.text() == "Okay":
 				good()
 
+		#When any of the three responses is clicked, goto onClicked
 		responses.apply.clicked.connect(onClicked)
 		responses.discard.clicked.connect(onClicked)
 		responses.good.clicked.connect(onClicked)
@@ -157,16 +161,34 @@ class settingsManager(QDialog):
 
 		# Settings Group Tabs
 		settingGroupTabs = QTabWidget(settingsPage)
+		self.generalTab = QWidget()
+		self.tab2 = QWidget()  # placeholder
+		self.tab3 = QWidget()  #placeholder
 
-		# Layout
-		horiz1 = QHBoxLayout()
-		horiz1.addWidget(labelWinTitle)
-		horiz1.addWidget(winTitle)
+		# Create tab layouts
+		def generalTabLayout ():
+			horiz1 = QHBoxLayout()
+			horiz1.addWidget(labelWinTitle)
+			horiz1.addWidget(winTitle)
+			return horiz1
 
-		parentLayout.addLayout(horiz1)
+		def tab2Layout ():  # placeholder
+			pass
 
-		parentLayout.addWidget(responses)
-		settingsPage.setLayout(parentLayout)
+		def tab3Layout ():  # placeholder
+			pass
+
+		# Set layouts
+		self.generalTab.setLayout(generalTabLayout())
+
+		# Add tabs to group
+		settingGroupTabs.addTab(self.generalTab, "General")
+		settingGroupTabs.addTab(self.tab2, "Tab 2")  # placeholder
+		settingGroupTabs.addTab(self.tab3, "Tab 3")  # placeholder
+
+		parentLayout.addWidget(settingGroupTabs)  # Add the tab group to the top level layout first; everything not in a tab should be below this
+		parentLayout.addWidget(responses)  # Add the 3 dialog responses to the top level layout last; nothing should appear below this
+		settingsPage.setLayout(parentLayout)  #Set the top level layout
 		settingsPage.show()
 
 	# responses.receivers(PYQT_SIGNAL = accResp)
@@ -184,7 +206,8 @@ class settingsManager(QDialog):
 		flags = Qt.Dialog  # Without this line, when MainWindow.window is set as parent, anything that would be displayed in its own dialog
 		# by appPreferences is instead confined to the geometry of window
 
-		# None of this part should apply to the settings window
+		# TODO: None of this part should apply to the settings window
+		# TODO: Figure out how to get this to apply to the main window
 		if (config.value("cfgKeepOnTop")) == True:
 			flags |= Qt.WindowStaysOnTopHint
 		if (config.value("cfgIsFrameless")) == True:
@@ -277,8 +300,3 @@ if __name__ == "__main__":
 	display.initSettings()
 	display.appPreferences()
 	sys.exit(app.exec_())
-
-
-	# Known Bugs:
-	# ---Opening the settings window the first time, the "Window Title:" label appears on top of the tab bar. After the first time, the label
-	#	is hidden underneath the tab bar, although it can be unobscured by resizing the window to move it
