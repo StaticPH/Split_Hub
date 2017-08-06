@@ -8,6 +8,7 @@ from PyQt5.QtCore import (Qt, QObject, QSettings)
 
 import warnings
 from Common import *
+from QTabWidgetExtras import *
 
 warnings.warn("Compiling SettingsControl")
 
@@ -160,7 +161,7 @@ class settingsManager(QDialog):
 		settingsList = [winTitle]  # DONT FORGET TO ADD TO THIS
 
 		# Settings Group Tabs
-		settingGroupTabs = QTabWidget(settingsPage)
+		settingGroupTabs = extendedTabWidget(settingsPage)  # Previously used QTabWidget directly
 		self.generalTab = QWidget()
 		self.tab2 = QWidget()  # placeholder
 		self.tab3 = QWidget()  #placeholder
@@ -182,7 +183,7 @@ class settingsManager(QDialog):
 		self.generalTab.setLayout(generalTabLayout())
 
 		# Add tabs to group
-		settingGroupTabs.addTab(self.generalTab, "General")
+		settingGroupTabs.addTabExtended(self.generalTab, "General", toolTip = "General Settings")
 		settingGroupTabs.addTab(self.tab2, "Tab 2")  # placeholder
 		settingGroupTabs.addTab(self.tab3, "Tab 3")  # placeholder
 
