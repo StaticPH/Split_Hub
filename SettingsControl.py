@@ -1,21 +1,25 @@
 from PyQt5.QtWidgets import (
-	QPushButton, QAction, QLabel, QCheckBox, QComboBox, QHBoxLayout,
-	QVBoxLayout, QTabWidget, QWidget, QDialog, QDialogButtonBox,
-	QStyleFactory, QGridLayout, QLineEdit, QActionGroup, QGroupBox
+	QPushButton, QAction, QLabel, QCheckBox, QLineEdit, QHBoxLayout,
+	QVBoxLayout, QWidget, QDialog, QDialogButtonBox,  # QTabWidget,
+	QGroupBox, QGridLayout
+	# ,QStyleFactory, QActionGroup, QComboBox
 )
+# noinspection PyUnusedImports, PyUnresolvedReferences
+from PyQt5.QtCore import (Qt, QSettings, QObject)  #QObject not currently used
 
-from PyQt5.QtCore import (Qt, QObject, QSettings)
-
+import sys
 import warnings
+from QTabWidgetExtras import extendedTabWidget
 from Common import *
-from QTabWidgetExtras import *
 
 warnings.warn("Compiling SettingsControl")
-
+enableTrivials = False
 # Section####################################### Start Settings Handling ###############################################
 class settingsManager(QDialog):
-	def __init__ (self):
+	def __init__ (self, parent = None):
+		# noinspection PyArgumentList
 		super(settingsManager, self).__init__()
+		self.setParent(parent)
 
 		self.settingsFile = QSettings(
 				"MySwitchboard.cfg",
@@ -27,108 +31,195 @@ class settingsManager(QDialog):
 				QSettings.UserScope,
 				"MySwitchboard.cfg"
 		)
+
+		global settingsList, settingEntry
+		settingsList = []
+
+		# noinspection PyRedeclaration, PyArgumentList
+		class settingEntry(QWidget):
+			# CURRENTLY ONLY WORKS WITH WIDGET BASED SETTINGS		FIXME
+			def __init__ (self, widget, cfgName):
+				super(settingEntry, self).__init__()
+				'''	The widget corresponding to the setting	'''
+				self.widget = widget
+				'''	The "key associated with the setting	'''
+				self.cfgName = cfgName
+				'''	Add this settingEntry to the list	'''
+				settingsList.append(self)
 		# self.windowFlags()
 		# flags = Qt.WindowFlags()
 		# flags = Qt.Dialog
 		# self.setWindowFlags(flags)
 		# self.show=self.appPreferences()
+
 		self.resize(500, 500)  # TEMPORARY
+		'''	create checkboxes for window flag controls	'''
+		self.windowStaysOnTopCheckBox = self.flagCheckBox("Keep the window on top?")
+		self.framelessWindowCheckBox = self.flagCheckBox("Frameless window mode")
+		self.windowTitleCheckBox = self.flagCheckBox("Show title bar?")
+
 		if __name__ == "__main__":  # TEMPORARY
 			actQuit = QAction("&Quit", self)
 			actQuit.setShortcut("Ctrl+q")
+			# noinspection PyUnresolvedReferences
 			actQuit.triggered.connect(sys.exit)
 			self.addAction(actQuit)
-		print("type of settingsManager is: " + str(type(self)))
-		print("type of settingsManager.settingsFile is :" + str(type(self.settingsFile)))
+		# else:
+		# 	print("settingsManager Name = " + __name__)
+		# 	print("parent of settingsManager is: " + str(self.parent().__class__.__name__))
+		# 	print("parentWidget of settingsManager is: " + str(self.parentWidget().__class__.__name__))
+		# 	print("type of settingsManager is: " + str(type(self)))
+		# 	print("type of settingsManager.settingsFile is :" + str(type(self.settingsFile)))
 		pass
 		# print(self.settingsFile.allKeys())
 		pass
 
+	# use @staticmethod???
 	def getSettingsFile (self):
 		return self.settingsFile
 
-	def appPreferences (self):
-		print("Preferences selected")
+	'''	Refresh field values	'''  # TODO: TRY TO FIND A BETTER WAY THAN THIS, consider making this into an override of showEvent()
 
-		settingsPage = self  # TODO: remove this, because its completely unnecessary, and just replace all settingsPage with self
+	# noinspection PyShadowingNames
+	def getCurrentValues (self):
 		config = self.settingsFile
+		for settingEntry in settingsList:
+			setting = settingEntry.widget
+			settingName = settingEntry.cfgName
+			# TODO: Handle different types, consider handling special cases
+			if True:  # setting.isModified()
+				print(settingName + " has been changed, but not saved. Refreshing field value.")
+				if (type(setting) == QLineEdit) and (setting.isModified()):
+					setting.setText(config.value(settingName))
+				elif (type(setting) == QLineEdit):
+					continue  # Temp
+				# elif (type(setting) == QCheckBox):	#Temp
+				# 	print("State: " + str(setting.checkState()))	#Temp
+				# 	print("Setting: " + str(config.value(settingName)))	#Temp
+				# 	# print("Corrected setting: " + str(correctBoolean(config.value(settingName))))	#Temp
+				elif (type(setting) == QCheckBox) and (setting.checkState() != correctBoolean(config.value(settingName))):
+					if correctBoolean(config.value(settingName)) == True:
+						setting.setChecked(True)
+					elif correctBoolean(config.value(settingName)) == False:
+						setting.setChecked(False)
+				elif (type(setting) == QCheckBox):
+					continue  # Temp
+				elif type(setting) == QPushButton:
+					pass
+				else:
+					print("Setting \"" + settingName + "\" matches no handled type. Its type is " + str(type(setting)))
 
+	'''	Refresh field values ONLY for checkboxes associated with a window flag	'''
+
+	def syncWindowFlagCheckStates (self):
+		config = self.settingsFile
+		for settingEntry in settingsList:
+			setting = settingEntry.widget
+			settingName = settingEntry.cfgName
+			if settingName.startswith("WindowFlags/"):
+				setting.setChecked(correctBoolean(config.value(settingName)))
+
+	'''	Update config file contents to match field values	'''  # TODO: TRY TO FIND A BETTER WAY THAN THIS
+
+	# noinspection PyShadowingNames
+	def updateModifiedValues (self):
+		config = self.settingsFile
+		for settingEntry in settingsList:
+			setting = settingEntry.widget
+			settingName = settingEntry.cfgName
+			# TODO:Handle different types, consider handling special cases
+			if True:  # setting.isModified()
+				print(settingName + " has been modified. Now saving.")
+
+				if (type(setting) == QLineEdit) and (setting.isModified()):
+					config.setValue(settingName, setting.text())
+				elif (type(setting) == QCheckBox) and (correctBoolean(config.value(settingName)) != setting.checkState()):
+					config.setValue(settingName, setting.checkState())
+					pass
+				elif type(setting) == QPushButton:
+					pass
+				else:
+					print("Setting \"" + settingName + "\" matches no handled type. Its type is " + str(type(setting)))
+
+	'''	Create check boxes for group boxes	'''
+
+	# Suppress warnings about unresolved references to connect() using noinspection PyUnresolvedReferences
+	# noinspection PyShadowingNames, PyUnresolvedReferences
+	def flagCheckBox (self, text = "<placeholder>"):
+		# Would have prevented a weak warning if it worked, but parameters and nonlocal variables can't have the same name. Using noinspection instead...
+		# nonlocal self
+		box = QCheckBox(text)
+
+		# Temporarily putting off fixing this until more content has been implemented
+		# box.stateChanged.connect(
+		# 	wrapper(self.updateFlags, self.parent).call
+		# 	# self.updateFlags
+		# )
+
+		def Link ():
+			wrapper(testPrint, "Flag Toggled").call()
+
+		box.stateChanged.connect(Link)
+		return box
+
+	def makeWindowFlagBox (self):  # consider having all the flag-checkboxes automatically added to a list
+		windowFlagBox = QGroupBox("Window Flags",
+								  self)  # Need to remember to pass self so that windowFlagBox becomes a descendant of settingsManager
+		# Create settingEntry for each checkbox
+		flag1 = settingEntry(self.windowStaysOnTopCheckBox, "WindowFlags/cfgKeepOnTop")
+		flag2 = settingEntry(self.framelessWindowCheckBox, "WindowFlags/cfgIsFrameless")
+		flag3 = settingEntry(self.windowTitleCheckBox, "WindowFlags/cfgShowTitle")
+		# sync checked states
+		self.syncWindowFlagCheckStates()
+		# Add checkbox widgets to layout
+		flagBoxLayout = QGridLayout()
+		flagBoxLayout.addWidget(self.windowStaysOnTopCheckBox)
+		flagBoxLayout.addWidget(self.framelessWindowCheckBox)
+		flagBoxLayout.addWidget(self.windowTitleCheckBox)
+		windowFlagBox.setLayout(flagBoxLayout)
+		return windowFlagBox
+
+	# noinspection PyAttributeOutsideInit, noinspection PyArgumentList
+	def appPreferences (self):
+		if enableTrivials: print("Preferences selected")
+
+		config = self.settingsFile
+		global settingEntry
 		self.setWindowTitle("Settings")
 
-		# Create check boxes for group boxes
-		def createCheckBox (self, text = "<placeholder>"):
-			box = QCheckBox(text, self)
-			box.stateChanged.connect(self.updatePreview)
-
-			def Link ():
-				wrapper(testPrint, "Flag Toggled").call()
-
-			box.stateChanged.connect(Link)
-			return box
-
-		# Refresh field values		#TODO: FIND A BETTER WAY THAN THIS
-		def getCurrentValues ():
-			for setting in settingsList:
-				# TODO: Handle different types, consider handling special cases
-				if setting.isModified():
-					print(setting.cfgName + " has been changed. Refreshing field value.")
-					if type(setting) == QLineEdit:
-						setting.setText(config.value(setting.cfgName))
-					elif type(setting) == QCheckBox:
-						if config.value(setting.cfgName) == True:
-							pass
-						elif config.value(setting.cfgName) == False:
-							pass
-					elif type(setting) == QPushButton:
-						pass
-					else:
-						print("Setting \"" + setting.cfgName + "\" matches no handled type. Its type is " + str(type(setting)))
-
-		# Update config file contents to match field values		#TODO: FIND A BETTER WAY THAN THIS
-		def updateModifiedValues ():
-			for setting in settingsList:
-				# TODO:Handle different types, consider handling special cases
-				if setting.isModified():
-					print(setting.cfgName + " has been modified. Now saving.")
-
-					if type(setting) == QLineEdit:
-						config.setValue(setting.cfgName, setting.text())
-					elif type(setting) == QCheckBox:
-						# if setting.
-						pass
-					elif type(setting) == QPushButton:
-						pass
-					else:
-						print("Setting \"" + setting.cfgName + "\" matches no handled type. Its type is " + str(type(setting)))
-
-		# settingsPage.update()
+		# NOTICE: createCheckBox USED TO BE HERE
+		# NOTICE: getCurrentValues USED TO BE HERE
+		# NOTICE: updateModifiedValues USED TO BE HERE
+		# self.update()
 		parentLayout = QVBoxLayout()
 
 		#Create the 3 possible responses to the dialog
 		responses = QDialogButtonBox(QDialogButtonBox.NoButton, Qt.Horizontal)
 		responses.apply = responses.addButton("Accept Changes", QDialogButtonBox.AcceptRole)
-		responses.good = responses.addButton("Okay", QDialogButtonBox.ActionRole)
+		# responses.good = responses.addButton("Okay", QDialogButtonBox.ActionRole)			#reminder: Consider if having a 3rd button is really necessary
 		responses.discard = responses.addButton("Discard Changes", QDialogButtonBox.RejectRole)
 
 		def accResp ():
 			wrapper(testPrint, "Accepting Changes...").call()
 
 			# Check for and save any changed settings
-			updateModifiedValues()
+			self.updateModifiedValues()
+			self.accept()  #TEMPORARY? See reminder above
 			# print(winTitle.text()); #text, textChanged, textEdited, setValidator, setText. setTooltip. QLineEdit,displayText
 			config.sync()
+			print("Leaving Settings")  #TEMPORARY? See reminder above
 
 		def rejResp ():
 			wrapper(testPrint, "Discarding Changes...").call()
-			getCurrentValues()
-			settingsPage.reject()
+			self.getCurrentValues()
+			self.reject()
 
-		def good ():
-			# settingsPage.setResult(QDialog.accepted())
-			# settingsPage.done(QDialog.accepted())
-			settingsPage.accept()
-			getCurrentValues()
-			print("Leaving Settings")
+		# def good ():
+		# 	# self.setResult(QDialog.accepted())
+		# 	# self.done(QDialog.accepted())
+		# 	self.accept()
+		# 	getCurrentValues()
+		# 	print("Leaving Settings")
 
 		# responses.accepted.connect(good)
 		# responses.accepted.connect(accResp)
@@ -142,55 +233,77 @@ class settingsManager(QDialog):
 				accResp()
 			elif sender.text() == "Discard Changes":
 				rejResp()
-			elif sender.text() == "Okay":
-				good()
+			# elif sender.text() == "Okay":
+			# 	good()
 
-		#When any of the three responses is clicked, goto onClicked
+		#When any of the three responses is clicked, go to onClicked
 		responses.apply.clicked.connect(onClicked)
+		# responses.good.clicked.connect(onClicked)		# see reminder above
 		responses.discard.clicked.connect(onClicked)
-		responses.good.clicked.connect(onClicked)
+
 
 		# Available(visible) Settings
 		# DONE: probably need to use a byte array to store current settings on opening preferences window. that would be used to restore discarded changes
 		# TODO: apply doesnt just need to sync, it needs to update too
-		winTitle = QLineEdit(config.value("cfgWindowTitle"))
-		winTitle.cfgName = "cfgWindowTitle"  # CRITICAL FOR AUTOMATIC SETTING SAVE
+		# NOTE: replaced the two lines below with a call to a class that contains the two, settingEntry
+		# winTitle = QLineEdit(config.value("cfgWindowTitle"))
+		# winTitle.cfgName = "cfgWindowTitle"  # CRITICAL FOR AUTOMATIC SETTING SAVE
+		winTitle = settingEntry(QLineEdit(config.value("cfgWindowTitle")), "cfgWindowTitle")
 		labelWinTitle = QLabel("Window Title:")
-		labelWinTitle.setBuddy(winTitle)
+		labelWinTitle.setBuddy(winTitle.widget)
 
-		settingsList = [winTitle]  # DONT FORGET TO ADD TO THIS
+		# windowFlagBox.setLayout(self.makeWindowFlagBox())
+		windowFlagBox = self.makeWindowFlagBox()
+		# self.windowFlagBox.setLayout(self.flagBoxLayout)
+		# print(self.windowFlagBox.children())
+		# if enableTrivials:
+		# 	print("windowFlagBox parent: " + str(windowFlagBox.parent().__class__.__name__))
+		# 	print("windowFlagBox parentWidget: " + str(windowFlagBox.parentWidget().__class__.__name__))
+		# 	print("Am I the ancestor of the windowFlagBox? " + str(self.isAncestorOf(windowFlagBox)))
 
-		# Settings Group Tabs
-		settingGroupTabs = extendedTabWidget(settingsPage)  # Previously used QTabWidget directly
+		# NOTE: the following line occurs automatically as part of new settingEntry class
+		# settingsList.append(winTitle)  # DONT FORGET TO ADD TO THIS
+
+		'''	Settings Group Tabs	'''
+		settingGroupTabs = extendedTabWidget(self)  # Previously used QTabWidget directly
 		self.generalTab = QWidget()
-		self.tab2 = QWidget()  # placeholder
-		self.tab3 = QWidget()  #placeholder
+		self.flagTab = QWidget()  # placeholder
+		self.tab3 = QWidget()  # placeholder
 
-		# Create tab layouts
+		'''	Create tab layouts	'''
+
+		# noinspection PyArgumentList
 		def generalTabLayout ():
-			horiz1 = QHBoxLayout()
-			horiz1.addWidget(labelWinTitle)
-			horiz1.addWidget(winTitle)
-			return horiz1
+			layout = QHBoxLayout()
+			layout.addWidget(labelWinTitle)
+			layout.addWidget(winTitle.widget)
+			return layout
 
-		def tab2Layout ():  # placeholder
-			pass
+		# noinspection PyArgumentList
+		def flagTabLayout ():
+			layout = QHBoxLayout()
+			layout.addWidget(windowFlagBox)
+			return layout
 
 		def tab3Layout ():  # placeholder
 			pass
 
-		# Set layouts
+		'''	Set layouts	'''
 		self.generalTab.setLayout(generalTabLayout())
+		self.flagTab.setLayout(flagTabLayout())  # TODO
+		# self.tab3.setLayout(tab3Layout())		#TODO
 
-		# Add tabs to group
+		'''	Add tabs to group	'''
 		settingGroupTabs.addTabExtended(self.generalTab, "General", toolTip = "General Settings")
-		settingGroupTabs.addTab(self.tab2, "Tab 2")  # placeholder
-		settingGroupTabs.addTab(self.tab3, "Tab 3")  # placeholder
+		settingGroupTabs.addTabExtended(self.flagTab, "Window Flags", toolTip = "Manage the window flags")  # placeholder
+		# self.windowFlagBox.show()
+		# settingGroupTabs.addTab(self.tab3, "Tab 3")  # placeholder
 
 		parentLayout.addWidget(settingGroupTabs)  # Add the tab group to the top level layout first; everything not in a tab should be below this
 		parentLayout.addWidget(responses)  # Add the 3 dialog responses to the top level layout last; nothing should appear below this
-		settingsPage.setLayout(parentLayout)  #Set the top level layout
-		settingsPage.show()
+		self.setLayout(parentLayout)  # Set the top level layout
+		# self.show()			<----THIS GUY HAS BEEN THE SOURCE OF ALL MY TROUBLES WITH THINGS DISAPPEARING
+		print("~~~~~~~~~")
 
 	# responses.receivers(PYQT_SIGNAL = accResp)
 	# responses.clicked(responses.apply)
@@ -200,7 +313,7 @@ class settingsManager(QDialog):
 	# QDialog.customEvent(),event,eventFilter, installEventFilter, leaveEvent,mask, showEvent, signalsBlocked
 	# responses.finished.connect(something to save?)???     sender      senderSignalIndex       result? signals?
 	##something that saves preferences when the OK button is pressed
-	def updateFlags (self):
+	def updateFlags (self, parent = None):
 		config = self.settingsFile
 		self.windowFlags()
 		flags = Qt.WindowFlags()
@@ -209,12 +322,50 @@ class settingsManager(QDialog):
 
 		# TODO: None of this part should apply to the settings window
 		# TODO: Figure out how to get this to apply to the main window
-		if (config.value("cfgKeepOnTop")) == True:
-			flags |= Qt.WindowStaysOnTopHint
-		if (config.value("cfgIsFrameless")) == True:
-			flags |= Qt.FramelessWindowHint
 
+		# probably going to need to pass this function the parent window or something
+		if ((config.value("WindowFlags/cfgKeepOnTop")) == True) or (self.windowStaysOnTopCheckBox.isChecked()):
+			flags |= Qt.WindowStaysOnTopHint
+		if ((config.value("WindowFlags/cfgIsFrameless")) == True) or (self.framelessWindowCheckBox.isChecked()):
+			flags |= Qt.FramelessWindowHint
+		if ((config.value("WindowFlags/cfgShowTitle")) == True) or (self.windowTitleCheckBox.isChecked()):
+			flags |= Qt.WindowTitleHint
+		if ((config.value("WindowFlags/cfgDropShadow")) == True):  # or (self.windowNoDropShadowCheckBox.isChecked()):
+			flags |= Qt.NoDropShadowWindowHint
+		if ((config.value("WindowFlags/cfgSysMenu")) == True):  # or (self.windowSystemMenuCheckBox.isChecked()):
+			flags |= Qt.WindowSystemMenuHint
+		if ((config.value("WindowFlags/cfgShadeButton")) == True):  # or (self.windowShadeButtonCheckBox.isChecked()):
+			flags |= Qt.WindowShadeButtonHint
+		# if ((config.value("WindowFlags/cfgKeepOnBottom")) == True):# or (self.windowStaysOnBottomCheckBox.isChecked()):
+		# 	flags |= Qt.WindowStaysOnBottomHint
+		if ((config.value("WindowFlags/cfgCustomizeWindow")) == True):  # or (self.customizeWindowHintCheckBox.isChecked()):
+			flags |= Qt.CustomizeWindowHint
+		# if parent is not None:
+		# 	parent.setWindowFlags(flags)
+		# else:
 		self.setWindowFlags(flags)
+
+	def retrieveFlags (self):  # WIP
+		config = self.settingsFile
+		flags = Qt.WindowFlags()
+		flags = Qt.Window
+		if ((config.value("WindowFlags/cfgKeepOnTop")) == True) or (self.windowStaysOnTopCheckBox.isChecked()):
+			flags |= Qt.WindowStaysOnTopHint
+		if ((config.value("WindowFlags/cfgIsFrameless")) == True) or (self.framelessWindowCheckBox.isChecked()):
+			flags |= Qt.FramelessWindowHint
+		if ((config.value("WindowFlags/cfgShowTitle")) == True) or (self.windowTitleCheckBox.isChecked()):
+			flags |= Qt.WindowTitleHint
+		if ((config.value("WindowFlags/cfgDropShadow")) == True):  # or (self.windowNoDropShadowCheckBox.isChecked()):
+			flags |= Qt.NoDropShadowWindowHint
+		if ((config.value("WindowFlags/cfgSysMenu")) == True):  # or (self.windowSystemMenuCheckBox.isChecked()):
+			flags |= Qt.WindowSystemMenuHint
+		if ((config.value("WindowFlags/cfgShadeButton")) == True):  # or (self.windowShadeButtonCheckBox.isChecked()):
+			flags |= Qt.WindowShadeButtonHint
+		# if ((config.value("WindowFlags/cfgKeepOnBottom")) == True):# or (self.windowStaysOnBottomCheckBox.isChecked()):
+		# 	flags |= Qt.WindowStaysOnBottomHint
+		if ((config.value("WindowFlags/cfgCustomizeWindow")) == True):  # or (self.customizeWindowHintCheckBox.isChecked()):
+			flags |= Qt.CustomizeWindowHint
+		return flags
 
 	def initSettings (self):
 		# NOTE:Is toolbar moveable or locked in place. Is it floatable. Maybe if i figure out how to let the user adjust contents,
@@ -222,74 +373,119 @@ class settingsManager(QDialog):
 		# TODO: Figure out how to add descriptive text into the config file, if at all possible
 
 		config = self.settingsFile  # test=config.setValue("test", 3);    print("test=" + str(config.value("test")))
-
-		# Style Configs
+		#TODO: Add print/logging statements when values need to be reset to default
+		'''	Style Configs	'''
 		cfgStyle = config.value("primaryStyle")
 		if str(config.value("primaryStyle")).capitalize().replace(" ", "") not in validStyles:
-			config.setValue("primaryStyle", "Windows Vista")
-			print("Resetting style to hard default")
+			if sys.platform.startswith("win32"):
+				config.setValue("primaryStyle", "Windows Vista")
+			else:
+				config.setValue("primaryStyle", "Fusion")
+			if enableTrivials: ("Resetting style to hard default")
 
-		# Main Toolbar Configs
+		'''	Main Toolbar Configs	'''
 		config.beginGroup("MainToolbar")
 
-		cfgMainToolBarPos = config.value("mainToolBarPosition")
+		cfgMainToolBarPos = config.value("mainToolBarPosition",
+										 Qt.LeftToolBarArea)  #Setting defaults like this while also including a case for invalid values may be redundant
 		if cfgMainToolBarPos == "\n" or cfgMainToolBarPos not in ["1", "2", "4", "8"]:
 			config.setValue("mainToolBarPosition", Qt.LeftToolBarArea)  # Default toolbar position is on the left side
 
-		cfgMainToolBarMoveable = config.value("isMainToolBarMovable")
-		if cfgMainToolBarMoveable not in extendedBools:
+		cfgMainToolBarMoveable = correctBoolean(config.value("isMainToolBarMovable", True))
+		if cfgMainToolBarMoveable == -1:
 			config.setValue("isMainToolBarMovable", True)  # Main toolbar is movable by default
-		elif cfgMainToolBarMoveable in [1, "t", "T", "true", "True"]:
-			config.setValue("isMainToolBarMovable", True)
-		elif cfgMainToolBarMoveable in [0, "f", "F", "false", "False"]:
-			config.setValue("isMainToolBarMovable", False)
+		elif cfgMainToolBarMoveable != -1:
+			config.setValue("isMainToolBarMovable", cfgMainToolBarMoveable)
 
-		cfgMainToolBarFloatable = config.value("isMainToolBarFloatable")
-		if cfgMainToolBarFloatable not in extendedBools:
+		cfgMainToolBarFloatable = correctBoolean(config.value("isMainToolBarFloatable", True))
+		if cfgMainToolBarMoveable == -1:
 			config.setValue("isMainToolBarFloatable", True)  # Main toolbar is floatable by default
-		elif cfgMainToolBarFloatable in [1, "t", "T", "true", "True"]:
-			config.setValue("isMainToolBarFloatable", True)
-		elif cfgMainToolBarFloatable in [0, "f", "F", "false", "False"]:
-			config.setValue("isMainToolBarFloatable", False)
+		elif cfgMainToolBarMoveable != -1:
+			config.setValue("isMainToolBarFloatable", cfgMainToolBarFloatable)
 
 		config.endGroup()
 
-		# TODO: Add checkboxes for these to config manager
+		# WIP: Add checkboxes for these to config manager
 		config.beginGroup("WindowFlags")
 
-		cfgKeepOnTop = config.value("cfgKeepOnTop")
-		if cfgKeepOnTop not in extendedBools:
+		cfgKeepOnTop = correctBoolean(config.value("cfgKeepOnTop", False))
+		if cfgKeepOnTop == -1:
 			config.setValue("cfgKeepOnTop", False)
-		elif cfgKeepOnTop in [0, "f", "F", "false", "False"]:
-			config.setValue("cfgKeepOnTop", False)
-		elif cfgKeepOnTop in [1, "t", "T", "true", "True"]:
-			config.setValue("cfgKeepOnTop", True)
+		elif cfgKeepOnTop != -1:
+			config.setValue("cfgKeepOnTop", cfgKeepOnTop)
+		self.windowStaysOnTopCheckBox.setChecked(cfgKeepOnTop)
 
-		cfgIsWindowFrameless = config.value("cfgIsFrameless")
-		if cfgIsWindowFrameless not in extendedBools:
+		cfgIsWindowFrameless = correctBoolean(config.value("cfgIsFrameless", False))
+		if cfgIsWindowFrameless == -1:
 			config.setValue("cfgIsFrameless", False)
-		elif cfgIsWindowFrameless in [0, "f", "F", "false", "False"]:
-			config.setValue("cfgIsFrameless", False)
-		elif cfgIsWindowFrameless in [1, "t", "T", "true", "True"]:
-			config.setValue("cfgIsFrameless", True)
+		elif cfgIsWindowFrameless != -1:
+			config.setValue("cfgIsFrameless", cfgIsWindowFrameless)
+		self.framelessWindowCheckBox.setChecked(cfgIsWindowFrameless)
 
-		self.updateFlags()
+		cfgShowWindowTitle = correctBoolean(config.value("cfgShowTitle", True))
+		if cfgShowWindowTitle == -1:
+			config.setValue("cfgShowTitle", True)
+		elif cfgShowWindowTitle != -1:
+			config.setValue("cfgShowTitle", cfgShowWindowTitle)
+		self.windowTitleCheckBox.setChecked(cfgShowWindowTitle)
+
+		cfgDropShadow = correctBoolean(config.value("cfgDropShadow", True))
+		if cfgDropShadow == -1:
+			config.setValue("cfgDropShadow", True)
+		elif cfgDropShadow != -1:
+			config.setValue("cfgDropShadow", cfgDropShadow)
+		# self.<CHECKBOX NAME>.setChecked(cfgDropShadow)
+
+		cfgShowSysMenu = correctBoolean(config.value("cfgSysMenu", True))
+		if cfgShowSysMenu == -1:
+			config.setValue("cfgSysMenu", True)
+		elif cfgShowSysMenu != -1:
+			config.setValue("cfgSysMenu", cfgShowSysMenu)
+
+		cfgShadeButton = correctBoolean(config.value("cfgShadeButton", True))
+		if cfgShadeButton == -1:
+			config.setValue("cfgShadeButton", True)
+		elif cfgShadeButton != -1:
+			config.setValue("cfgShadeButton", cfgShadeButton)
+
+		# Considering enabling this
+		# cfgKeepOnBottom = correctBoolean(config.value("cfgKeepOnBottom",False))
+		# if cfgKeepOnBottom == -1:
+		# 	config.setValue("cfgKeepOnBottom", False)
+		# elif cfgKeepOnBottom != -1:
+		# 	config.setValue("cfgKeepOnBottom", cfgKeepOnBottom)
+
+		cfgCustomizeWindow = correctBoolean(config.value("cfgCustomizeWindow", True))
+		if cfgCustomizeWindow == -1:
+			config.setValue("cfgCustomizeWindow", True)
+		elif cfgCustomizeWindow != -1:
+			config.setValue("cfgCustomizeWindow", cfgCustomizeWindow)
+
+		self.updateFlags()  # parent.setflags(retrieveflags)
+		# self.parent().setWindowFlags(self.retrieveFlags())
+
 
 		config.endGroup()
 
-		# Other Configs
-		cfgTitle = config.value("cfgWindowTitle")
+		'''	Other Configs	'''
+		cfgTitle = config.value("cfgWindowTitle", "I am a window")
 		if cfgTitle == "\n":
+			# This isn't really required, but it makes sure that the config has a value set in the config file even if the field was cleared.
 			config.setValue("cfgWindowTitle", "I am a window")
 
+		cfgCreateSystemTrayIcon = correctBoolean(config.value("cfgShouldCreateTrayIcon", True))
+		if cfgCreateSystemTrayIcon == -1:
+			config.setValue("cfgShouldCreateTrayIcon", True)
+		elif cfgCreateSystemTrayIcon != -1:
+			config.setValue("cfgShouldCreateTrayIcon", cfgCreateSystemTrayIcon)
+
 		# Makes sure that default window geometry value is available in case there isn't one in the config
-		cfgWindowGeometry = config.value("mainWindowGeometry")
+		cfgWindowGeometry = config.value("mainWindowGeometry", defaultWindowGeometry)
 		if type(cfgWindowGeometry) is None or cfgWindowGeometry == "\n" or cfgWindowGeometry == "":
 			config.setValue("mainWindowGeometry", defaultWindowGeometry)
-			print("Defaulting geometry")
+			if enableTrivials: print("Defaulting geometry")
 
 if __name__ == "__main__":
-	import sys
 	from PyQt5.QtWidgets import QApplication
 
 	app = QApplication(sys.argv)
@@ -299,5 +495,8 @@ if __name__ == "__main__":
 	display = settingsManager()
 
 	display.initSettings()
+	# print(display.settingsFile.value("WindowFlags/cfgKeepOnTop"))
 	display.appPreferences()
+	# display.dumpObjectInfo()
+	# display.dumpObjectTree()
 	sys.exit(app.exec_())

@@ -1,28 +1,30 @@
 from PyQt5.QtWidgets import (
-
-	QWidget, QTabBar, QTabWidget,
-	QLayout, QHBoxLayout, QVBoxLayout, QGridLayout,
-	QDialog, QDialogButtonBox, QAction, QLabel,
-	QPushButton, QMessageBox, QStatusBar, QLineEdit, QActionGroup, QCheckBox, QStyleFactory, QGroupBox, QComboBox
+	QTabWidget,  # QWidget, QTabBar,
+	# QLayout, QHBoxLayout, QVBoxLayout, QGridLayout,
+	# QDialog, QDialogButtonBox, QLabel,
+	QPushButton  # , QMessageBox, QStatusBar, QLineEdit, QActionGroup, QCheckBox, QStyleFactory, QGroupBox, QComboBox
 )
-from PyQt5.QtGui import QIcon, QClipboard
-from PyQt5.QtCore import (Qt, QObject, QSettings)
+
+from PyQt5.QtGui import QIcon
+#from PyQt5.QtCore import (Qt, QObject, QSettings)
 
 import warnings
 from Common import *
 
-warnings.warn("Compiling Tab_test")
-
+warnings.warn("Compiling QTabWidgetExtras")
 
 # Tweaks and extended functionality for QTabWidget
 class extendedTabWidget(QTabWidget):
 	def __init__ (self, parent = None):
 		super(extendedTabWidget, self).__init__()
 		if __name__ == "__main__":  # TEMPORARY
+			from PyQt5.QtWidgets import QAction
 			actQuit = QAction("&Quit", self)
 			actQuit.setShortcut("Ctrl+q")
+			#noinspection PyUnresolvedReferences
 			actQuit.triggered.connect(sys.exit)
 			self.addAction(actQuit)
+		#NOTE: Consider adding optional parameters from which to set the following functions to the constructor
 		# self.setTabPosition()			#options are North(above pages)(DEFAULT), South(below pages), East(right of pages), West(left of pages)
 		# self.setTabShape()			#options are Rounded(DEFAULT), Triangular
 		# self.setTabBarAutoHide()		#boolean, DEFAULT:False
@@ -71,7 +73,6 @@ class extendedTabWidget(QTabWidget):
 		# if whatsThis is not None:
 		# 	self.setTabWhatsThis(index, whatsThis)
 
-
 if __name__ == "__main__":
 	import sys
 	from PyQt5.QtWidgets import QApplication
@@ -89,6 +90,7 @@ if __name__ == "__main__":
 	foo = extendedTabWidget()
 
 	btn = QPushButton("Do Nothing", foo)
+	# noinspection PyUnresolvedReferences
 	btn.clicked.connect(dumbPrint)
 
 	foo.addTabExtended(btn, "Test Button", QIcon("logo.png"), toolTip = "placeholder")
