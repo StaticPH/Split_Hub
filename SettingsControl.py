@@ -11,10 +11,12 @@ import sys
 import warnings
 from QTabWidgetExtras import extendedTabWidget
 from Common import *
+from StyleHandler import styleSheets
 
 warnings.warn("Compiling SettingsControl")
 enableTrivials = False
 # Section####################################### Start Settings Handling ###############################################
+# noinspection PyGlobalUndefined
 class settingsManager(QDialog):
 	def __init__ (self, parent = None):
 		# noinspection PyArgumentList
@@ -79,7 +81,6 @@ class settingsManager(QDialog):
 		return self.settingsFile
 
 	'''	Refresh field values	'''  # TODO: TRY TO FIND A BETTER WAY THAN THIS, consider making this into an override of showEvent()
-
 	# noinspection PyShadowingNames
 	def getCurrentValues (self):
 		config = self.settingsFile
@@ -179,7 +180,7 @@ class settingsManager(QDialog):
 		windowFlagBox.setLayout(flagBoxLayout)
 		return windowFlagBox
 
-	# noinspection PyAttributeOutsideInit, noinspection PyArgumentList
+	# noinspection PyAttributeOutsideInit, PyArgumentList
 	def appPreferences (self):
 		if enableTrivials: print("Preferences selected")
 
@@ -375,13 +376,28 @@ class settingsManager(QDialog):
 		config = self.settingsFile  # test=config.setValue("test", 3);    print("test=" + str(config.value("test")))
 		#TODO: Add print/logging statements when values need to be reset to default
 		'''	Style Configs	'''
+		config.beginGroup("Style_Options")
 		cfgStyle = config.value("primaryStyle")
-		if str(config.value("primaryStyle")).capitalize().replace(" ", "") not in validStyles:
+		if (cfgStyle is None) or (cfgStyle.capitalize().replace(" ", "") not in validStyles):
 			if sys.platform.startswith("win32"):
 				config.setValue("primaryStyle", "Windows Vista")
 			else:
 				config.setValue("primaryStyle", "Fusion")
-			if enableTrivials: ("Resetting style to hard default")
+			if enableTrivials: print("Resetting style to hard default")
+
+		cfgStyleSheet = config.value("styleSheet")
+		sheet = None
+		if cfgStyleSheet is not None: sheet = cfgStyleSheet.lower().replace(" ", "")  # str(config.value("styleSheet")).replace(" ", "")
+		if (sheet is None) or ((sheet not in styleSheets) and (sheet != "default")):
+			if sheet is None or sheet == "":
+				print("No stylesheet specified. Using default.")
+			else:  # noinspection PyTypeChecker
+				print("Stylesheet \"" + sheet + "\" could not be found.")
+			config.setValue("styleSheet", "default")
+		else:
+			if enableTrivials: print("Using stylesheet \"" + sheet + "\".")
+			config.setValue("styleSheet", sheet)
+		config.endGroup()
 
 		'''	Main Toolbar Configs	'''
 		config.beginGroup("MainToolbar")
@@ -405,6 +421,7 @@ class settingsManager(QDialog):
 
 		config.endGroup()
 
+		''' Main Window Flag Configs'''
 		# WIP: Add checkboxes for these to config manager
 		config.beginGroup("WindowFlags")
 
@@ -468,10 +485,10 @@ class settingsManager(QDialog):
 		config.endGroup()
 
 		'''	Other Configs	'''
-		cfgTitle = config.value("cfgWindowTitle", "I am a window")
-		if cfgTitle == "\n":
+		cfgTitle = config.value("cfgWindowTitle")
+		if (cfgTitle is None) or (cfgTitle == "\n"):
 			# This isn't really required, but it makes sure that the config has a value set in the config file even if the field was cleared.
-			config.setValue("cfgWindowTitle", "I am a window")
+			config.setValue("cfgWindowTitle", "Switchboard")
 
 		cfgCreateSystemTrayIcon = correctBoolean(config.value("cfgShouldCreateTrayIcon", True))
 		if cfgCreateSystemTrayIcon == -1:
@@ -480,7 +497,7 @@ class settingsManager(QDialog):
 			config.setValue("cfgShouldCreateTrayIcon", cfgCreateSystemTrayIcon)
 
 		# Makes sure that default window geometry value is available in case there isn't one in the config
-		cfgWindowGeometry = config.value("mainWindowGeometry", defaultWindowGeometry)
+		cfgWindowGeometry = config.value("mainWindowGeometry")
 		if type(cfgWindowGeometry) is None or cfgWindowGeometry == "\n" or cfgWindowGeometry == "":
 			config.setValue("mainWindowGeometry", defaultWindowGeometry)
 			if enableTrivials: print("Defaulting geometry")

@@ -13,6 +13,7 @@ from PyQt5.QtCore import (Qt, QObject, QSettings)  # QCoreApplication
 # import SettingsControl
 from SettingsControl import settingsManager
 from QTabWidgetExtras import extendedTabWidget
+from StyleHandler import *
 from Common import *
 
 enableTrivials = False
@@ -123,7 +124,7 @@ class mainToolBar(QToolBar):
 		self.settings.setValue("MainToolbar/isMainToolBarMovable", self.isMovable())
 		self.refreshProperties()
 		# QApplication.setStyle(QStyleFactory.create(text))
-		self.setStyle(QStyleFactory.create(self.settings.value("primaryStyle")))
+		self.setStyle(QStyleFactory.create(self.settings.value("Style_Options/primaryStyle")))
 
 	def toggleFloatingMode (self):
 		self.setFloatable(negate(self.isFloatable()))
@@ -132,7 +133,6 @@ class mainToolBar(QToolBar):
 		self.refreshProperties()
 
 	'''	"Template" function for a toolbar button with an icon	'''
-
 	# noinspection PyUnresolvedReferences
 	def toolBar_Icon (self, icon, func, tooltip, statustip = "Null"):
 		item = QAction(QIcon(icon), tooltip, self)
@@ -148,7 +148,6 @@ class mainToolBar(QToolBar):
 		return item
 
 	'''	"Template" function for a text-only toolbar button	'''
-
 	# noinspection PyUnresolvedReferences
 	def toolBar_Text (self, text, func):
 		item = QAction(text, self)
@@ -161,11 +160,10 @@ class mainToolBar(QToolBar):
 		return item
 
 	'''	Add toolbars and populate them with buttons	'''
-
 	def setup (self):
 		# Make buttons
 		iconB = self.toolBar_Icon(
-				"logo.png", testPrint, "icon", "Do something"
+				"assets/logo.png", testPrint, "icon", "Do something"
 		)
 		textB = self.toolBar_Text("&Textual Button", testPrint)
 
@@ -175,10 +173,9 @@ class mainToolBar(QToolBar):
 
 
 class window(QMainWindow):
-	def __init__ (self):
+	def __init__ (self):  # noinspection PyArgumentList
 		super(window, self).__init__()
-		print("TestMain")
-
+		self.styler = StyleHandler(True)
 		self.setObjectName("Mother Window")  # print("I am the "+ self.objectName())
 		self.setAttribute(Qt.WA_QuitOnClose, True)  # FIXME:Ensures that closing the main window also closes the preferences window
 
@@ -210,11 +207,12 @@ class window(QMainWindow):
 		if enableTrivials: ("Window flags: " + str(self.windowFlags()))  # WIP
 
 		'''Sets the window style to the configured value'''
-		self.themeControl(str(self.settings.value("primaryStyle")).replace(" ", ""))
+		self.styler.applyStyle(str(self.settings.value("Style_Options/primaryStyle")).replace(" ", ""))
+		self.styler.loadStyleSheet(str(self.settings.value("Style_Options/styleSheet")).replace(" ", ""))
 
 		'''setup window aspects'''
 		self.setWindowTitle(self.settings.value("cfgWindowTitle"))
-		self.setWindowIcon(QIcon('logo.png'))
+		self.setWindowIcon(QIcon('assets/logo.png'))
 		self.declareActions()
 
 		self.setStatusBar(QStatusBar(self))
@@ -253,7 +251,7 @@ class window(QMainWindow):
 		# tempFlagCheck = self.basicCheckBox( self.test )
 
 		if self.settings.value("cfgShouldCreateTrayIcon") == True:
-			self.trayObject = trayItem(self, 'logo.png')
+			self.trayObject = trayItem(self, 'assets/logo.png')
 			# maybe move the addition of actions and setting of the context menu to here
 			self.trayObject.show()
 
@@ -398,10 +396,12 @@ class window(QMainWindow):
 
 		styleGroup = QActionGroup(mainMenu)  # QActionGroup is exclusive by default
 		# maybe: Move construction of styles(and their associated names, tooltips, etc) into Common.py?
-		windows = wrapper(self.themeControl, "Windows")
-		winVista = wrapper(self.themeControl, "Windowsvista")
-		winXP = wrapper(self.themeControl, "Windowsxp")
-		fusion = wrapper(self.themeControl, "Fusion")
+		# TODO: figure out a way to programmatically add available styles to the menu
+		windows = wrapper(self.styler.applyStyle, "Windows")
+		winVista = wrapper(self.styler.applyStyle, "Windowsvista")
+		winXP = wrapper(self.styler.applyStyle, "Windowsxp")
+		fusion = wrapper(self.styler.applyStyle, "Fusion")
+		# TODO:only add a menu item if its name is in QStyleFactory.keys()
 		style1 = self.menuItem(fusion, "Fusion", statusTips ["fusion"], isToggle = True, group = styleGroup)
 		style2 = self.menuItem(windows, "Windows", statusTips ["windows"], isToggle = True, group = styleGroup)
 		style3 = self.menuItem(winVista, "Windows Vista", statusTips ["vista"], isToggle = True, group = styleGroup)
@@ -409,17 +409,18 @@ class window(QMainWindow):
 
 		# Makes sure that the configured style appears as checked on load
 		for style in styleGroup.actions():
-			# print("style: "+str(style.text()).capitalize().replace(" ", "") + "	setting: "+config.value("primaryStyle"))
-			if (str(style.text()).capitalize().replace(" ", "")) == config.value("primaryStyle"): style.setChecked(True)
+			# print("style: "+str(style.text()).capitalize().replace(" ", "") + "	setting: "+config.value("Style_Options/primaryStyle"))
+			if (str(style.text()).capitalize().replace(" ", "")) == config.value("Style_Options/primaryStyle").capitalize().replace(" ", ""):
+				style.setChecked(True)
 		if sys.platform.startswith("win32"):
 			style3.setText(style3.text() + " (Default)")  # On Windows operating systems, mark "Windows Vista" as the default style
 		else:
 			style1.setText(style1.text() + " (Default)")  # On non-Windows operating systems, mark "Fusion" as the default style
 
-		colorPicker = self.menuItem(QColorDialog.getColor, "Color Picker")
 		# TODO: Reset layout of window to default?
 		# resetPlacement = self.menuItem(None, "Reset Window Layout", "Reset the window layout to default")
-
+		colorPicker = self.menuItem(QColorDialog.getColor, "Color Picker")
+	
 		# Make menus
 		fileMenu = mainMenu.addMenu("File")
 		editMenu = mainMenu.addMenu("Edit")
@@ -445,11 +446,11 @@ class window(QMainWindow):
 		styleMenu.addAction(style3)
 		styleMenu.addAction(style4)
 
-	# noinspection PyArgumentList
-	def themeControl (self, text):
-		if enableTrivials: print("Setting style to " + text)
-		QApplication.setStyle(QStyleFactory.create(text))
-		self.settings.setValue("primaryStyle", text)
+	# # noinspection PyArgumentList
+	# def themeControl (self, text):
+	# 	if enableTrivials: print("Setting style to " + text)
+	# 	QApplication.setStyle(QStyleFactory.create(text))
+	# 	self.settings.setValue("Style_Options/primaryStyle", text)
 
 	def updateFlags (self):
 		config = self.settings
@@ -464,7 +465,6 @@ class window(QMainWindow):
 		self.show()
 
 	'''	Move all of the code for the contents of the pageBar out of the __init__	'''
-
 	# noinspection PyArgumentList
 	def makePageBar (self):
 		pageBar = QTabWidget(self)  # Note: TabWidget is a QWidget
@@ -505,7 +505,6 @@ class window(QMainWindow):
 		return bar
 
 	'''	Basic,does nothing much, pop-up window prompt; probably wont make a template function	'''
-
 	def popup (self):
 		choice = QMessageBox(self)
 		choice.setText("What do you do?")  # move to center of popup
@@ -555,6 +554,7 @@ class window(QMainWindow):
 		# print("Saving Geometry")
 		# print(self.settings.value("mainWindowGeometry"))
 		# print(self.saveGeometry())
+		self.settings.setValue("Style_Options/primaryStyle", self.styler.styleName)
 		if self.settings.value("cfgShouldCreateTrayIcon") == True:
 			self.trayObject.deleteLater()
 		self.close()
@@ -593,11 +593,21 @@ def testPrint (text = "Debug"):
 if __name__ == "__main__":
 	import sys
 
+	# from assets.stylesheets import DarkS
+	# noinspection PyUnusedImports
+	# import style_rc
 	app = QApplication(sys.argv)
 	app.setApplicationName("My Switchboard")
 	# app.setApplicationDisplayName("My Switchboard")
 
 	display = window()
+	# styleSheet = str(display.settings.value("Style_Options/primaryStyle")).capitalize().replace(" ", "")
+	# if styleSheet in validStyles:
+	# 	app.setStyleSheet(QStyleFactory.create(styleSheet))
+	# else:
+	# 	# import PyQt5.QtWidgets.QCommonStyle
+	# 	print(styleSheet)
+	# 	app.setStyleSheet(DarkS.loadDarkStyle())
 	display.show()
 	# display.dumpObjectInfo()
 	# display.dumpObjectTree()

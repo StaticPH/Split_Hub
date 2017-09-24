@@ -83,7 +83,8 @@ if __name__ == "__main__":
 
 	# print(str(app.effectiveWinId()))
 
-	# Because PyQt isn't very smart, as A.B.connect(func) doesn't work correctly when func tries to print a variable with a default value
+	# Because PyQt isn't very smart, as A.B.connect(func) doesn't work correctly
+	# when func tries to print a variable with a default value
 	def dumbPrint (): testPrint()
 
 
