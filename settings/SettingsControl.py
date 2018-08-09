@@ -7,7 +7,6 @@ from Common import *
 from QTabWidgetExtras import extendedTabWidget
 
 import warnings, sys
-
 warnings.warn("Interpreting SettingsControl")
 enableTrivials = False
 
