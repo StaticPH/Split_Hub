@@ -1,21 +1,17 @@
 from PyQt5.QtWidgets import (
-	QApplication, QMainWindow, QStyleFactory,
-	QProgressBar, QMessageBox, QDial, QHBoxLayout,
+	QMainWindow, QProgressBar, QMessageBox, QDial, QHBoxLayout,
 	QVBoxLayout, QTabWidget,
-	QGridLayout, QActionGroup, QStatusBar, QToolBar, QColorDialog, QSystemTrayIcon, QMenu,
-	QDialogButtonBox
+	QActionGroup, QStatusBar, QToolBar, QColorDialog, QSystemTrayIcon, QMenu
 	# Already imported elsewhere, change "import settingsManager" to "import *" to make the following imports redundant
-, QGroupBox, QDialog, QWidget, QComboBox, QPushButton, QAction, QLabel, QCheckBox, QLineEdit
+, QWidget, QPushButton, QAction, QLabel, QCheckBox
 )
-
+from PyQt5.QtCore import Qt, QObject, QByteArray, QVariant
 from PyQt5.QtGui import QIcon, QClipboard, QContextMenuEvent
-from PyQt5.QtCore import (Qt, QObject, QSettings)  # QCoreApplication
-# import SettingsControl
-from SettingsControl import settingsManager
-from QTabWidgetExtras import extendedTabWidget
-from StyleHandler import *
-from Common import *
 
+from StyleHandler import *
+from settings.SettingsControl import settingsManager
+from QTabWidgetExtras import extendedTabWidget
+from Common import *
 enableTrivials = False
 
 
@@ -256,7 +252,15 @@ class window(QMainWindow):
 			self.trayObject.show()
 
 		if self.settings.value("mainWindowGeometry"):
-			self.restoreGeometry(self.settings.value("mainWindowGeometry"))
+			# G = self.restoreGeometry(bytes(self.settings.value("mainWindowGeometry")))
+			# print(G)
+			a = QByteArray(self.saveGeometry())
+			print(a)
+			print("ZIL")
+			b = self.restoreGeometry(
+				b'\x04\xb0\x00\x00\x02\xd7\x00\x00\x02\xbd\x00\x00\x00\xe4\x00\x00\x04\xb0\x00\x00\x02\xd7\x00\x00\x00\x00\x00\x00\x00\x00\x07\x80').to_bytes()
+			print(b)
+		# t = self.geo
 		else:
 			self.restoreGeometry(defaultWindowGeometry)
 		self.updateFlags()
@@ -323,10 +327,6 @@ class window(QMainWindow):
 			print("no function")
 
 		return btn
-
-	# Tri-state checkbox     WIP
-	def triCheckBox (self, func = None, text = 'test', X = 25, Y = 75):
-		self.basicCheckBox(func, text, X, Y, True)
 
 	# TODO:Rewrite
 	# Simple checkbox with default parameters for position and label, and handling for tri-state boxes
@@ -609,6 +609,7 @@ if __name__ == "__main__":
 	# 	print(styleSheet)
 	# 	app.setStyleSheet(DarkS.loadDarkStyle())
 	display.show()
+	print("1")
 	# display.dumpObjectInfo()
 	# display.dumpObjectTree()
 	sys.exit(app.exec_())
