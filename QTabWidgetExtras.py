@@ -11,7 +11,7 @@ from PyQt5.QtGui import QIcon
 import warnings
 from Common import *
 
-warnings.warn("Compiling QTabWidgetExtras")
+warnings.warn("Interpreting QTabWidgetExtras")
 
 # Tweaks and extended functionality for QTabWidget
 class extendedTabWidget(QTabWidget):
@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
 	# print(str(app.effectiveWinId()))
 
-	# Because PyQt isn't very smart, as A.B.connect(func) doesn't work correctly
+	# Because something isn't very smart, as A.B.connect(func) doesn't work correctly
 	# when func tries to print a variable with a default value
 	def dumbPrint (): testPrint()
 
@@ -94,7 +94,7 @@ if __name__ == "__main__":
 	# noinspection PyUnresolvedReferences
 	btn.clicked.connect(dumbPrint)
 
-	foo.addTabExtended(btn, "Test Button", QIcon("logo.png"), toolTip = "placeholder")
+	foo.addTabExtended(btn, "Test Button", QIcon("Logo.png"), toolTip = "placeholder")
 	foo.show()
 
 	sys.exit(app.exec_())
