@@ -21,7 +21,6 @@ Features/TODO List
     *Display indicating CPU usage % and #of processes
     *Display indicating current RAM usage. probably in the form of a vertical bar AND a text label.
     *Display of (local/computer) date and time. local weather if arrangeable
-    *WIP: Add config menu items for the desired window flags(Ex: Keep-on-top, frameless window, etc)
     *Application close confirmation popup (Will be toggled in preferences)
     *Make status bar at bottom of page have clearly defined edges
     *Use QDockWidget to create a tool palette(like in a web browser) from which the user can customize which widgets should be where on the toolbar
@@ -29,22 +28,28 @@ Features/TODO List
     * Create an extended version of QSettings' setValue and value functions, which should respectively
         * require a parameter, either a string or a type(undecided), to indicate the type the value should be given. This should be prepended to all config entries, in the form of "B:"(bool), "S:"(string), etc.
         * ignore the first 2 characters of all config entries???, which should be an indicator of value type. Also, automatically run correctBoolean on all entries prepended with "B:"
+
     * ? Have a list of QActions initialized in some kind of loop?
     * ? Add a list of keybinds, maybe use https://doc.qt.io/qt-5/qaction.html#shortcuts ?
     * ?   Display of current network I/O ?
     * ?   Allow adjusting colors of histograph/chart/progress bar attributes through a (menu accessed popup or tab?) application preferences (menu?)
     * ? Make 'hidden'(only accessible via config, maybe even not shown there by default) config for specifying an alternate logo
     * ? "Quick Launch" buttons for various applications(Ex: Snipping Tool). Possibly even buttons that launch multiple at a time ?
+
+    *WIP: Add config menu items for the desired window flags(Ex: Keep-on-top, frameless window, etc)
     *WIP: Implement a "Dark" mode
     * Make a page in the settings gui where menu entries can be customized to an extent. At the very least, make a list that autoloads all styles QStyleFactory already knows about, and allows the user to configure which styles show up in the menu.
-    *DONE:  Sync settings TO config before close
+
+    *REDO:  Keep on top capability
+    *REDO:  Sync settings TO config before close
+
     *DONE:  Button to clear system clipboard
     *DONE:  Universal color picker function. WITH A PIPETTE TOOL
     *DONE:  Retain previous settings
-    *DONE:  Keep on top capability
     *DONE: 	Make sure that the configured style appears as checked on load
     *DONE: 	Edit the logo to make the white background transparent
     *DONE:  Add a system tray icon which can be enabled/disabled from the config file
     *DONE:  Give main toolbar its own context menu with a CHECKABLE option to lock/unlock the toolbar
     *DONE:  Give main toolbar its own context menu with a CHECKABLE option to float/unfloat the toolbar
-    *NOT FEASIBLE: ~~Add descriptive text into the config file, if at all possible.~~
+
+    *NOT FEASIBLE WITHOUT REWORKING/REPLACING QSETTINGS. RECONSIDERING: Add descriptive text into the config file, if at all possible.
