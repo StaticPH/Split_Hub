@@ -9,7 +9,7 @@ from PyQt5.QtGui import QIcon
 #from PyQt5.QtCore import (Qt, QObject, QSettings)
 
 import warnings
-from Common import *
+from utilities.Common import *
 
 warnings.warn("Interpreting QTabWidgetExtras")
 

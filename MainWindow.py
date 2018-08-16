@@ -1,18 +1,23 @@
 from PyQt5.QtWidgets import (
+	QApplication, QWidget,
 	QMainWindow, QVBoxLayout, QTabWidget,
-	QActionGroup, QStatusBar, QToolBar, QColorDialog, QMenu, QPushButton, QAction, QCheckBox, QStyleFactory, QApplication
+	QActionGroup, QStatusBar, QToolBar, QColorDialog, QMenu, QPushButton, QAction, QCheckBox, QStyleFactory
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QContextMenuEvent
 
+from utilities.BooleanUtils import negate
+from utilities.Common import *
+from utilities.Qtilities import *
+
 from TrayItem import trayItem
 from settings.SettingsControl import settingsManager
-from Common import *
+
 enableTrivials = False
 
 class mainToolWindow(QToolBar):
 	# noinspection PyUnresolvedReferences
-	def __init__ (self, parent = None):
+	def __init__(self, parent = None):
 		super(mainToolWindow, self).__init__()
 		self.setParent(parent)
 		self.settings = parent.settings
@@ -23,36 +28,40 @@ class mainToolWindow(QToolBar):
 		self.popupMenu = QMenu()
 		self.popupMenu.setToolTipsVisible(True)
 
-		# Create QActions with 1st parameter 'QIcon(None)' to make tooltips visible, and 3rd parameter 'self' to make status tips visible
-		self.isLockedInPosition = QAction(QIcon(None), "Docked Mode", self)
-		self.isLockedInPosition.setCheckable(True)
-		self.isLockedInPosition.setStatusTip("Lock(/unlock(dock/undock) the toolbar")
-		self.isLockedInPosition.triggered.connect(self.toggleDockingMode)
-
-		self.canToolWindowFloat = QAction(QIcon(None), "Floatable Mode", self)
-		self.canToolWindowFloat.setCheckable(True)
-		self.canToolWindowFloat.setStatusTip("Enable/disable floating the toolbar as a separate window.")
-		self.canToolWindowFloat.setToolTip(
-				"NOTE: Disabling does not automatically unfloat the toolbar.\n" +
-				"Moving the toolbar a little bit will unfloat it and return it to its docked position in the window"
-		)
-		self.canToolWindowFloat.triggered.connect(self.toggleFloatingMode)
-
-		self.popupMenu.addAction(self.canToolWindowFloat)
-		self.popupMenu.addAction(self.isLockedInPosition)
+		self.addAllActionsToObject(self.popupMenu)
 		self.refreshChecks()
 
-	def refreshProperties (self):
+	# noinspection PyAttributeOutsideInit
+	def declareActions(self):
+		""" Just keep all the action declarations out of __init__ for cleanliness """
+		self.isLockedInPosition = createAction2("Docked Mode", self, self.toggleDockingMode, isCheckable = True,
+												statusTip = "Lock(/unlock(dock/undock) the toolbar")
+		floatOptionTooltip = ("NOTE: Disabling does not automatically unfloat the toolbar.\n" +
+							  "Moving the toolbar a little bit will unfloat it and return it to its docked position in the window.")
+		self.canToolWindowFloat = createAction2("Floating Mode", self, self.toggleFloatingMode, isCheckable = True,
+												statusTip = "Enable/disable floating the toolbar as a separate window",
+												toolTip = floatOptionTooltip)
+
+	# MAYBE: Move this function to Qtilities.py, as this is already quite generic as it is, and might be useful elsewhere
+	def addAllActionsToObject(self, obj):
+		""" Find all QActions whose parent is ``self`` and call ``obj.addAction()`` for each of them. """
+		for member in vars(self).values():
+			# print(type(member))
+			if type(member) == QAction:
+				# print("Found action " + str(member.__class__))
+				obj.addAction(member)
+
+	def refreshProperties(self):
 		self.setFloatable(self.settings.value("MainToolbar/isMainToolBarFloatable"))
 		self.setMovable(self.settings.value("MainToolbar/isMainToolBarMovable"))
 
-	def refreshChecks (self):
-		# self.isLockedInPosition should be checked when self.isMovable() == False, so that the it is checked when isLockedInPosition in place
+	def refreshChecks(self):
+		# self.isLockedInPosition should be checked when self.isMovable() == False, so that the it is checked when locked in place
 		self.isLockedInPosition.setChecked(negate(self.isMovable()))
 		# self.canToolWindowFloat should be checked when self.isFloatable() == True, so that it is checked when the toolbar can float
 		self.canToolWindowFloat.setChecked(self.isFloatable())
 
-	def contextMenuEvent (self, event):
+	def contextMenuEvent(self, event):
 		pos = None  # This is just to make the inspector shut up, and is probably even considered incorrect practice for Python
 		if event.reason() == QContextMenuEvent.Mouse:
 			pos = event.globalPos()
@@ -60,8 +69,9 @@ class mainToolWindow(QToolBar):
 		if pos is not None:
 			self.popupMenu.popup(pos)
 
+	# Todo: I can't quite put my finger on it, but I can see that this function could be refactored, specifically the first 3 lines.
 	# noinspection PyArgumentList
-	def toggleDockingMode (self):
+	def toggleDockingMode(self):
 		self.setMovable(negate(self.isMovable()))
 		self.isLockedInPosition.setChecked(negate(self.isMovable()))
 		self.settings.setValue("MainToolbar/isMainToolBarMovable", self.isMovable())
@@ -69,16 +79,16 @@ class mainToolWindow(QToolBar):
 		# QApplication.setStyle(QStyleFactory.create(text))
 		self.setStyle(QStyleFactory.create(self.settings.value("Style_Options/primaryStyle")))
 
-	def toggleFloatingMode (self):
+	def toggleFloatingMode(self):
 		self.setFloatable(negate(self.isFloatable()))
 		self.canToolWindowFloat.setChecked(self.isFloatable())
 		self.settings.setValue("MainToolbar/isMainToolBarFloatable", self.isFloatable())
 		self.refreshProperties()
 
-	'''	"Template" function for a toolbar button with an icon	'''
 	# noinspection PyUnresolvedReferences
 	def toolBar_Icon(self, icon, func, tooltip, statustip = None):
-		item = QAction(QIcon(icon), tooltip, self)
+		"""	'Template' function for a toolbar button with an icon	"""
+		item = QAction(QIcon(icon), tooltip, self)  # TODO: consider replacing this with a call to createAction2
 
 		if statustip is not None:
 			item.setStatusTip(statustip)
@@ -87,17 +97,17 @@ class mainToolWindow(QToolBar):
 
 		return item
 
-	'''	"Template" function for a text-only toolbar button	'''
 	# noinspection PyUnresolvedReferences
-	def toolBar_Text (self, text, func):
-		item = QAction(text, self)
+	def toolBar_Text(self, text, func):
+		"""	'Template' function for a text-only toolbar button	"""
+		item = QAction(text, self)  # TODO: consider replacing this with a call to createAction
 
 		setTriggerResponse(item, func, "One or more text type items on your toolbar")
 
 		return item
 
-	'''	Add toolbars and populate them with buttons	'''
-	def setup (self):
+	def setup(self):
+		"""	Add toolbars and populate them with buttons	"""
 		# Make buttons
 
 		test = wrapper(print, "test")
@@ -112,7 +122,7 @@ class mainToolWindow(QToolBar):
 		self.addAction(textB)
 
 class window(QMainWindow):
-	def __init__ (self):  # noinspection PyArgumentList
+	def __init__(self):  # noinspection PyArgumentList
 		super(window, self).__init__()
 		self.setObjectName("Mother Window")  # print("I am the "+ self.objectName())
 		self.setAttribute(Qt.WA_QuitOnClose, True)  # TODO:Ensures that closing the main window also closes the preferences window
@@ -136,7 +146,7 @@ class window(QMainWindow):
 		'''setup window aspects'''
 		self.setWindowTitle("Switchboard")
 		self.setWindowIcon(QIcon('assets/Logo.png'))
-		self.declareActions()
+		self.declareGeneralActions()
 
 		self.setStatusBar(QStatusBar(self))
 		# self.XY = QLabel(
@@ -179,43 +189,31 @@ class window(QMainWindow):
 			print("Window height:" + str(self.height()))
 			print("done init")
 
-	# Declare application wide Actions
 	# noinspection PyUnresolvedReferences,PyAttributeOutsideInit
-	def declareActions (self):  # WIP		#TODO: Consider shifting this to Common
+	def declareGeneralActions(self):  # WIP
+		"""Declare application wide Actions"""
+
 		# Cut
-		self.actCut = QAction("Cu&t", self)
-		self.actCut.setShortcut("Ctrl+x")
+		def Link(): wrapper(print, "Cut").call()
 
-		def Link ():
-			wrapper(print, "Cut").call()
-
-		self.actCut.triggered.connect(Link)
+		self.actCut = createAction("Cu&t", self, Link, "Ctrl+X")
 
 		# Copy
-		self.actCopy = QAction("&Copy", self)
-		self.actCopy.setShortcut("Ctrl+c")
+		def Link(): wrapper(print, "Copy").call()
 
-		def Link ():
-			wrapper(print, "Copy").call()
-
-		self.actCopy.triggered.connect(Link)
+		self.actCopy = createAction("&Copy", self, Link, "Ctrl+C")
 
 		# Paste
-		self.actPaste = QAction("&Paste", self)
-		self.actPaste.setShortcut("Ctrl+v")
+		def Link(): wrapper(print, "Paste").call()
 
-		def Link ():
-			wrapper(print, "Paste").call()
-
-		self.actPaste.triggered.connect(Link)
+		self.actPaste = createAction("&Paste", self, Link, "Ctrl+v")
 
 	def setStyleFromString(self, styleName: str):
 		# noinspection PyArgumentList,PyCallByClass
 		self.setStyle(QStyleFactory.create(styleName))
 
-	# Simple button with default parameters for position, label, and tooltip(none)
-	# noinspection PyUnresolvedReferences
 	def triggerButton(self, text = 'test', func = None, tip = None, X: int = None, Y: int = None):
+		"""Simple (trigger-type response) button with optional parameters for position, label, and tooltip(none)"""
 		btn = QPushButton(text, self)
 		btn.adjustSize()
 		btn.setToolTip(tip)
@@ -228,6 +226,7 @@ class window(QMainWindow):
 		return btn
 
 	def clickButton(self, text = 'test', func = None, tip = None, X: int = None, Y: int = None):
+		"""Simple (click-type response) button with optional parameters for position, label, and tooltip(none)"""
 		btn = QPushButton(text, self)
 		btn.adjustSize()
 		btn.setToolTip(tip)
@@ -239,9 +238,10 @@ class window(QMainWindow):
 
 		return btn
 
-	# Simple checkbox with some handling for tri-state boxes
+	# FIXME
 	# noinspection PyUnresolvedReferences
 	def basicCheckBox(self, func = None, text = 'test', X: int = None, Y: int = None, isTri = False):
+		"""Simple checkbox with some handling for tri-state boxes"""
 		checkBox = QCheckBox(text, self)
 		checkBox.adjustSize()
 
@@ -263,8 +263,8 @@ class window(QMainWindow):
 
 		return checkBox
 
-	# "Template" function for a simple menu item
 	def menuItem(self, func, name, tip = None, shortcut = None, isToggle = False, group = None):
+		"""	'Template' function for a simple menu item	"""
 		item = QAction(name, self)  # self reminder: item is now a QAction
 		item.setStatusTip(tip)
 
@@ -280,8 +280,9 @@ class window(QMainWindow):
 
 		return item
 
-	# Add menus and populate them with actions
-	def topMenu (self):
+	# MAYBE: REFACTOR
+	def topMenu(self):
+		"""Add menus and populate them with actions"""
 		config = self.settings  # ; self.statusBar()
 		mainMenu = self.menuBar()
 
@@ -295,10 +296,10 @@ class window(QMainWindow):
 		winXP = wrapper(self.setStyleFromString, "Windowsxp")
 		fusion = wrapper(self.setStyleFromString, "Fusion")
 		# TODO:only add a menu item if its name is in QStyleFactory.keys()
-		style1 = self.menuItem(fusion, "Fusion", statusTips ["fusion"], isToggle = True, group = styleGroup)
-		style2 = self.menuItem(windows, "Windows", statusTips ["windows"], isToggle = True, group = styleGroup)
-		style3 = self.menuItem(winVista, "Windows Vista", statusTips ["vista"], isToggle = True, group = styleGroup)
-		style4 = self.menuItem(winXP, "Windows XP", statusTips ["XP"], isToggle = True, group = styleGroup)
+		style1 = self.menuItem(fusion, "Fusion", statusTips["fusion"], isToggle = True, group = styleGroup)
+		style2 = self.menuItem(windows, "Windows", statusTips["windows"], isToggle = True, group = styleGroup)
+		style3 = self.menuItem(winVista, "Windows Vista", statusTips["vista"], isToggle = True, group = styleGroup)
+		style4 = self.menuItem(winXP, "Windows XP", statusTips["XP"], isToggle = True, group = styleGroup)
 
 		# Makes sure that the configured style appears as checked on load
 		for style in styleGroup.actions():
@@ -340,9 +341,9 @@ class window(QMainWindow):
 		styleMenu.addAction(style3)
 		styleMenu.addAction(style4)
 
-	'''	Move all of the code for the contents of the pageBar out of the __init__	'''
 	# noinspection PyArgumentList
-	def makePageBar (self):
+	def makePageBar(self):
+		"""	Move all of the code for the contents of the pageBar out of the __init__ """
 		pageBar = QTabWidget(self)
 		tab1 = QWidget()
 
@@ -361,23 +362,41 @@ class window(QMainWindow):
 
 		return pageBar
 
-	def closeEvent (self, *args, **kwargs):
+	def closeEvent(self, *args, **kwargs):
 		self.settings.setValue("mainWindowGeometry", self.saveGeometry())
 		# print("Saving Geometry")
 		# print(self.settings.value("mainWindowGeometry"))
 		# print(self.saveGeometry())
 		# self.settings.setValue("Style_Options/primaryStyle", self.style())
-		if self.settings.value("cfgShouldCreateTrayIcon") == True:
+		if self.settings.value(
+				"cfgShouldCreateTrayIcon") == True:  # should replace this with some sort of try block, because the trayObject might not be properly cleaned up if the setting is changed to false while the program is running
 			self.trayObject.deleteLater()
 		self.close()
 
 if __name__ == "__main__":
 	import sys
+
 	app = QApplication(sys.argv)
 	app.setApplicationName("My Switchboard")
 
 	display = window()
 	display.show()
+
+	# Proof of concept for adding a method to ALL instances of a class defined by a python language binding. also works for those NOT defined by a binding.
+	# Even adds the new method to the __dict__ entry for the target class! though if you want to check that it's available to an object that extends that class, you'd need to call dir(<OBJECT>) and look through the results; it'll be there!
+	# def proof():
+	# 	def getName(self):
+	# 		print("getting object's class name..." + self.__class__.__name__)
+	# 	QObject.getName=getName
+	# proof()
+	# display.settingsMan.getName()
+	# display.clip.getName()
+	# display.settings.getName()
+	# display.clearClipboardButton.getName()
+	# # print(QObject.__dict__)
+	# print(dir(settingsManager))
+	# print("\n\n\n\n\n\n\n\n")
+
 	sys.exit(app.exec_())
 
 # Quit			THIS IS A BAD SHORTCUT! DONT DO IT!

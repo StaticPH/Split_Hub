@@ -1,18 +1,27 @@
-from PyQt5.QtCore import (Qt, QSettings, QObject, QByteArray)  # QObject not currently used
+from PyQt5.QtCore import (Qt, QSettings, QObject, QByteArray)  # QObject and QByteArray not currently used
 from PyQt5.QtWidgets import (
 	QPushButton, QLineEdit, QDialog, QDialogButtonBox, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox
 )
 
-from Common import *
+from utilities.Common import *
 from QTabWidgetExtras import extendedTabWidget
 
 import warnings, sys
+
+from utilities.BooleanUtils import isUsableAsBoolean, correctBoolean
+
 warnings.warn("Interpreting SettingsControl")
 enableTrivials = False
 
 # Section####################################### Start Settings Handling ###############################################
 # noinspection PyGlobalUndefined
 class settingsManager(QDialog):
+
+	# class settingsWindow(QDialog):
+
+	# class settingsLoader(QSettings):  BUT FIRST, TRY WITH JUST
+	# class settingsLoader():
+
 	# def __init__ (self, parent = None):
 	def __init__(self):
 		# noinspection PyArgumentList
@@ -72,13 +81,13 @@ class settingsManager(QDialog):
 		if cfgMainToolBarPos == "\n" or cfgMainToolBarPos not in ["1", "2", "4", "8"]:
 			config.setValue("mainToolBarPosition", Qt.LeftToolBarArea)  # Default toolbar position is on the left side
 
-		if correctBoolean(config.value("isMainToolBarMovable")) == -1:
+		if isUsableAsBoolean(config.value("isMainToolBarMovable")):
 			config.setValue("isMainToolBarMovable", True)  # Main toolbar is movable by default
 		else:
 			cfgMainToolBarMoveable = correctBoolean(config.value("isMainToolBarMovable", True, bool))
 			config.setValue("isMainToolBarMovable", cfgMainToolBarMoveable)
 
-		if correctBoolean(config.value("isMainToolBarFloatable")) == -1:
+		if isUsableAsBoolean(config.value("isMainToolBarFloatable")):
 			config.setValue("isMainToolBarFloatable", True)  # Main toolbar is floatable by default
 		else:
 			cfgMainToolBarFloatable = correctBoolean(config.value("isMainToolBarFloatable", True, bool))
@@ -92,7 +101,7 @@ class settingsManager(QDialog):
 		# 	# This isn't really required, but it makes sure that the config has a value set in the config file even if the field was cleared.
 		# 	config.setValue("cfgWindowTitle", "Switchboard")
 
-		if correctBoolean(config.value("cfgShouldCreateTrayIcon")) == -1:
+		if isUsableAsBoolean(config.value("cfgShouldCreateTrayIcon")):
 			config.setValue("cfgShouldCreateTrayIcon", True)
 		else:
 			cfgCreateSystemTrayIcon = correctBoolean(config.value("cfgShouldCreateTrayIcon", True, bool))

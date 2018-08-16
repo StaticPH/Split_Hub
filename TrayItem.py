@@ -7,10 +7,12 @@ class trayItem(QSystemTrayIcon):
 	# considering the addition of other context menu items
 	def __init__(self, parent, icon = None):
 		super(trayItem, self).__init__()
+
 		self.setParent(parent)
 		print("trayItem's parent is : " + str(self.parent.__name__) + "\t" + str(self.parent()))
 		self.setIcon(QIcon(icon))
 		self.setToolTip("Switchboard")
+
 		context = self.rightClickResponse()
 		self.setContextMenu(context)
 		self.activated.connect(self.clickRestraint)
