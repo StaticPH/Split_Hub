@@ -10,7 +10,7 @@ from PyQt5.QtGui import QIcon
 
 import warnings
 from utilities.Common import *
-
+from utilities import translations as tr
 warnings.warn("Interpreting QTabWidgetExtras")
 
 # Tweaks and extended functionality for QTabWidget
@@ -19,7 +19,7 @@ class extendedTabWidget(QTabWidget):
 		super(extendedTabWidget, self).__init__()
 		if __name__ == "__main__":  # TEMPORARY
 			from PyQt5.QtWidgets import QAction
-			actQuit = QAction("&Quit", self)
+			actQuit = QAction(tr.TR_ACT_QUIT, self)
 			actQuit.setShortcut("Ctrl+q")
 			#noinspection PyUnresolvedReferences
 			actQuit.triggered.connect(sys.exit)

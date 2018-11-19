@@ -1,6 +1,8 @@
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QSystemTrayIcon, QMenu, QAction
 
+from utilities import translations as tr
+
 class trayItem(QSystemTrayIcon):
 	# maybe:Add an action to the context menu that will disable(and hide) the tray icon
 	# maybe:It would need a tooltip mentioning that it would need to be re-enabled via the config or the menu
@@ -36,15 +38,15 @@ class trayItem(QSystemTrayIcon):
 		parent = self.parent()
 		menu = QMenu(parent)
 
-		quitAction = QAction("&Quit", self)
+		quitAction = QAction(tr.TR_ACT_QUIT, self)
 		quitAction.triggered.connect(parent.closeEvent)
 		menu.addAction(quitAction)
 
-		clearClip = QAction("Clear Clipboard", self)
+		clearClip = QAction(tr.TR_CLR_CLIP, self)
 		clearClip.triggered.connect(parent.clip.clear)
 		menu.addAction(clearClip)
 
-		# colorPicker = QAction("Color Picker", self)
+		# colorPicker = QAction(tr.TR_COLR_PIKR, self)
 		# colorPicker.triggered.connect(QColorDialog.getColor)
 		# menu.addAction(colorPicker)
 		return menu

@@ -40,7 +40,7 @@ def isUsableAsBoolean(choice, allowAnyFloat: bool = False):
 	return False
 
 def correctBoolean(choice: str, allowNonZeroAsTrue = False, returnForInvalid = -1):
-	choice = str(choice)  # In case a boolean mistakenly gets passed in
+	choice = str(choice)  # In case a boolean or int mistakenly gets passed in
 	if choice.lower() in ('true', 't', 'yes', 'y', '1'):
 		return True
 	elif choice.lower() in ('false', 'f', 'no', 'n', '0'):

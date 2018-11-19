@@ -29,6 +29,8 @@ Features/TODO List
         * require a parameter, either a string or a type(undecided), to indicate the type the value should be given. This should be prepended to all config entries, in the form of "B:"(bool), "S:"(string), etc.
         * ignore the first 2 characters of all config entries???, which should be an indicator of value type. Also, automatically run correctBoolean on all entries prepended with "B:"
 
+	* Optionally take an alternate user config file as a launch parameter
+	 
     * ? Have a list of QActions initialized in some kind of loop?
     * ? Add a list of keybinds, maybe use https://doc.qt.io/qt-5/qaction.html#shortcuts ?
     * ?   Display of current network I/O ?
@@ -53,3 +55,5 @@ Features/TODO List
     *DONE:  Give main toolbar its own context menu with a CHECKABLE option to float/unfloat the toolbar
 
     *NOT FEASIBLE WITHOUT REWORKING/REPLACING QSETTINGS. RECONSIDERING: Add descriptive text into the config file, if at all possible.
+
+NOTE: Would probably be easier on myself to be less lenient with booleans

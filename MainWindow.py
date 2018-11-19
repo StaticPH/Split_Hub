@@ -1,126 +1,21 @@
 from PyQt5.QtWidgets import (
 	QApplication, QWidget,
 	QMainWindow, QVBoxLayout, QTabWidget,
-	QActionGroup, QStatusBar, QToolBar, QColorDialog, QMenu, QPushButton, QAction, QCheckBox, QStyleFactory
+	QActionGroup, QStatusBar, QColorDialog, QStyleFactory
 )
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon, QContextMenuEvent
 
-from utilities.BooleanUtils import negate
+from functools import partial
+
+from MainToolBar import mainToolBar
 from utilities.Common import *
 from utilities.Qtilities import *
+from utilities import translations as lang
 
-from TrayItem import trayItem
+from trayItem import trayItem
 from settings.SettingsControl import settingsManager
 
 enableTrivials = False
-
-class mainToolWindow(QToolBar):
-	# noinspection PyUnresolvedReferences
-	def __init__(self, parent = None):
-		super(mainToolWindow, self).__init__()
-		self.setParent(parent)
-		self.settings = parent.settings
-
-		self.setWindowTitle("Main Toolbar")
-		self.toolBarPosition = int(self.settings.value("MainToolbar/mainToolBarPosition"))
-
-		self.popupMenu = QMenu()
-		self.popupMenu.setToolTipsVisible(True)
-
-		self.addAllActionsToObject(self.popupMenu)
-		self.refreshChecks()
-
-	# noinspection PyAttributeOutsideInit
-	def declareActions(self):
-		""" Just keep all the action declarations out of __init__ for cleanliness """
-		self.isLockedInPosition = createAction2("Docked Mode", self, self.toggleDockingMode, isCheckable = True,
-												statusTip = "Lock(/unlock(dock/undock) the toolbar")
-		floatOptionTooltip = ("NOTE: Disabling does not automatically unfloat the toolbar.\n" +
-							  "Moving the toolbar a little bit will unfloat it and return it to its docked position in the window.")
-		self.canToolWindowFloat = createAction2("Floating Mode", self, self.toggleFloatingMode, isCheckable = True,
-												statusTip = "Enable/disable floating the toolbar as a separate window",
-												toolTip = floatOptionTooltip)
-
-	# MAYBE: Move this function to Qtilities.py, as this is already quite generic as it is, and might be useful elsewhere
-	def addAllActionsToObject(self, obj):
-		""" Find all QActions whose parent is ``self`` and call ``obj.addAction()`` for each of them. """
-		for member in vars(self).values():
-			# print(type(member))
-			if type(member) == QAction:
-				# print("Found action " + str(member.__class__))
-				obj.addAction(member)
-
-	def refreshProperties(self):
-		self.setFloatable(self.settings.value("MainToolbar/isMainToolBarFloatable"))
-		self.setMovable(self.settings.value("MainToolbar/isMainToolBarMovable"))
-
-	def refreshChecks(self):
-		# self.isLockedInPosition should be checked when self.isMovable() == False, so that the it is checked when locked in place
-		self.isLockedInPosition.setChecked(negate(self.isMovable()))
-		# self.canToolWindowFloat should be checked when self.isFloatable() == True, so that it is checked when the toolbar can float
-		self.canToolWindowFloat.setChecked(self.isFloatable())
-
-	def contextMenuEvent(self, event):
-		pos = None  # This is just to make the inspector shut up, and is probably even considered incorrect practice for Python
-		if event.reason() == QContextMenuEvent.Mouse:
-			pos = event.globalPos()
-		# item = self.actionAt(event.pos())
-		if pos is not None:
-			self.popupMenu.popup(pos)
-
-	# Todo: I can't quite put my finger on it, but I can see that this function could be refactored, specifically the first 3 lines.
-	# noinspection PyArgumentList
-	def toggleDockingMode(self):
-		self.setMovable(negate(self.isMovable()))
-		self.isLockedInPosition.setChecked(negate(self.isMovable()))
-		self.settings.setValue("MainToolbar/isMainToolBarMovable", self.isMovable())
-		self.refreshProperties()
-		# QApplication.setStyle(QStyleFactory.create(text))
-		self.setStyle(QStyleFactory.create(self.settings.value("Style_Options/primaryStyle")))
-
-	def toggleFloatingMode(self):
-		self.setFloatable(negate(self.isFloatable()))
-		self.canToolWindowFloat.setChecked(self.isFloatable())
-		self.settings.setValue("MainToolbar/isMainToolBarFloatable", self.isFloatable())
-		self.refreshProperties()
-
-	# noinspection PyUnresolvedReferences
-	def toolBar_Icon(self, icon, func, tooltip, statustip = None):
-		"""	'Template' function for a toolbar button with an icon	"""
-		item = QAction(QIcon(icon), tooltip, self)  # TODO: consider replacing this with a call to createAction2
-
-		if statustip is not None:
-			item.setStatusTip(statustip)
-
-		setTriggerResponse(item, func, "One or more icon type items on your toolbar")
-
-		return item
-
-	# noinspection PyUnresolvedReferences
-	def toolBar_Text(self, text, func):
-		"""	'Template' function for a text-only toolbar button	"""
-		item = QAction(text, self)  # TODO: consider replacing this with a call to createAction
-
-		setTriggerResponse(item, func, "One or more text type items on your toolbar")
-
-		return item
-
-	def setup(self):
-		"""	Add toolbars and populate them with buttons	"""
-		# Make buttons
-
-		test = wrapper(print, "test")
-
-		iconB = self.toolBar_Icon(
-				"assets/Logo.png", test, "icon", "Do something"
-		)
-		textB = self.toolBar_Text("&Textual Button", test)
-
-		# Add buttons to toolbars
-		self.addAction(iconB)
-		self.addAction(textB)
-
 class window(QMainWindow):
 	def __init__(self):  # noinspection PyArgumentList
 		super(window, self).__init__()
@@ -147,6 +42,7 @@ class window(QMainWindow):
 		self.setWindowTitle("Switchboard")
 		self.setWindowIcon(QIcon('assets/Logo.png'))
 		self.declareGeneralActions()
+		self.createPartials()
 
 		self.setStatusBar(QStatusBar(self))
 		# self.XY = QLabel(
@@ -154,11 +50,11 @@ class window(QMainWindow):
 		# # self.statusBar.addPermanentWidget(self.XY)
 		# QStatusBar.addPermanentWidget(self.statusBar(), self.XY)
 
-		self.clearClipboardButton = self.clickButton("Clear Clipboard", wrapper(self.clip.clear))  # Button which clears the system clipboard
+		self.clearClipboardButton = self.clickButton(lang.TR_CLR_CLIP, wrapper(self.clip.clear))  # Button which clears the system clipboard
 		# if enableTrivials: print(self.clip.text())#print clipboard text
 
 		self.topMenu()
-		self.mainToolBar = mainToolWindow(self)
+		self.mainToolBar = mainToolBar(self)
 		self.mainToolBar.setup()
 		'''Add toolbars to window. CRITICAL STEP'''
 		self.addToolBar(self.mainToolBar.toolBarPosition, self.mainToolBar)
@@ -167,9 +63,11 @@ class window(QMainWindow):
 		self.mainToolBar.addWidget(self.pageBar)
 		if self.settings.value("cfgShouldCreateTrayIcon") == True:
 			self.trayObject = trayItem(self, 'assets/Logo.png')
-			# maybe move the addition of actions and setting of the context menu to here
+			# maybe: Move the addition of actions and setting of the context menu to here?
+			# maybe: By which I mean call something to do that from here, rather than in trayItem.__init__()
 			self.trayObject.show()
 
+		# Maybe: It might be good to move this if/else block to whatever will eventually be responsible for reloading/refreshing MainWindow's settings
 		if self.settings.value("mainWindowGeometry"):
 			# 	# G = self.restoreGeometry(bytes(self.settings.value("mainWindowGeometry")))
 			# 	# print(G)
@@ -189,79 +87,34 @@ class window(QMainWindow):
 			print("Window height:" + str(self.height()))
 			print("done init")
 
-	# noinspection PyUnresolvedReferences,PyAttributeOutsideInit
+	# noinspection PyUnresolvedReferences, PyAttributeOutsideInit
 	def declareGeneralActions(self):  # WIP
 		"""Declare application wide Actions"""
 
 		# Cut
 		def Link(): wrapper(print, "Cut").call()
 
-		self.actCut = createAction("Cu&t", self, Link, "Ctrl+X")
+		self.actCut = createAction(lang.TR_ACT_CUT, self, Link, "Ctrl+X")
 
 		# Copy
 		def Link(): wrapper(print, "Copy").call()
 
-		self.actCopy = createAction("&Copy", self, Link, "Ctrl+C")
+		self.actCopy = createAction(lang.TR_ACT_COPY, self, Link, "Ctrl+C")
 
 		# Paste
 		def Link(): wrapper(print, "Paste").call()
 
-		self.actPaste = createAction("&Paste", self, Link, "Ctrl+v")
+		self.actPaste = createAction(lang.TR_ACT_PASTE, self, Link, "Ctrl+v")
+
+	# noinspection PyAttributeOutsideInit
+	def createPartials(self):
+		self.clickButton = partial(clickButton, self)
+		self.triggerButton = partial(triggerButton, self)
+		self.basicCheckBox = partial(basicCheckBox, self)
 
 	def setStyleFromString(self, styleName: str):
 		# noinspection PyArgumentList,PyCallByClass
 		self.setStyle(QStyleFactory.create(styleName))
-
-	def triggerButton(self, text = 'test', func = None, tip = None, X: int = None, Y: int = None):
-		"""Simple (trigger-type response) button with optional parameters for position, label, and tooltip(none)"""
-		btn = QPushButton(text, self)
-		btn.adjustSize()
-		btn.setToolTip(tip)
-
-		if X is not None and Y is not None:
-			btn.move(X, Y)
-
-		setTriggerResponse(btn, func, "triggerButton with text " + repr(text))
-
-		return btn
-
-	def clickButton(self, text = 'test', func = None, tip = None, X: int = None, Y: int = None):
-		"""Simple (click-type response) button with optional parameters for position, label, and tooltip(none)"""
-		btn = QPushButton(text, self)
-		btn.adjustSize()
-		btn.setToolTip(tip)
-
-		if X is not None and Y is not None:
-			btn.move(X, Y)
-
-		setClickedResponse(btn, func, "clickButton with text " + repr(text))
-
-		return btn
-
-	# FIXME
-	# noinspection PyUnresolvedReferences
-	def basicCheckBox(self, func = None, text = 'test', X: int = None, Y: int = None, isTri = False):
-		"""Simple checkbox with some handling for tri-state boxes"""
-		checkBox = QCheckBox(text, self)
-		checkBox.adjustSize()
-
-		if X is not None and Y is not None:
-			checkBox.move(X, Y)
-
-		if isTri == True:
-			checkBox.setTristate(True)
-
-		if isinstance(func, wrapper):
-			def link():
-				func.call()
-
-			checkBox.stateChanged.connect(link)
-		elif func is not None:
-			checkBox.stateChanged.connect(func)
-		else:
-			print("basicCheckbox with text " + repr(text) + " has no function")
-
-		return checkBox
 
 	def menuItem(self, func, name, tip = None, shortcut = None, isToggle = False, group = None):
 		"""	'Template' function for a simple menu item	"""
@@ -289,17 +142,28 @@ class window(QMainWindow):
 		# Make menu items
 		# prefs = self.menuItem(self.settingsMan.show, "Preferences", "View and edit application settings")
 		# prefs.setMenuRole(QAction.PreferencesRole)
-
 		styleGroup = QActionGroup(mainMenu)
 		windows = wrapper(self.setStyleFromString, "Windows")
 		winVista = wrapper(self.setStyleFromString, "Windowsvista")
 		winXP = wrapper(self.setStyleFromString, "Windowsxp")
 		fusion = wrapper(self.setStyleFromString, "Fusion")
 		# TODO:only add a menu item if its name is in QStyleFactory.keys()
-		style1 = self.menuItem(fusion, "Fusion", statusTips["fusion"], isToggle = True, group = styleGroup)
-		style2 = self.menuItem(windows, "Windows", statusTips["windows"], isToggle = True, group = styleGroup)
-		style3 = self.menuItem(winVista, "Windows Vista", statusTips["vista"], isToggle = True, group = styleGroup)
-		style4 = self.menuItem(winXP, "Windows XP", statusTips["XP"], isToggle = True, group = styleGroup)
+		style1 = self.menuItem(
+				fusion, lang.TR_STYLEMENU_FUSION, lang.TR_STYLEMENU_FUSION_TOOLTIP,
+				isToggle = True, group = styleGroup
+		)
+		style2 = self.menuItem(
+				windows, lang.TR_STYLEMENU_WINDOWS, lang.TR_STYLEMENU_WINDOWS_TOOLTIP,
+				isToggle = True, group = styleGroup
+		)
+		style3 = self.menuItem(
+				winVista, lang.TR_STYLEMENU_VISTA, lang.TR_STYLEMENU_VISTA_TOOLTIP,
+				isToggle = True, group = styleGroup
+		)
+		style4 = self.menuItem(
+				winXP, lang.TR_STYLEMENU_XP, lang.TR_STYLEMENU_XP_TOOLTIP,
+				isToggle = True, group = styleGroup
+		)
 
 		# Makes sure that the configured style appears as checked on load
 		for style in styleGroup.actions():
@@ -307,21 +171,22 @@ class window(QMainWindow):
 			if (str(style.text()).capitalize().replace(" ", "")) == config.value("Style_Options/primaryStyle").capitalize().replace(" ", ""):
 				style.setChecked(True)
 		if sys.platform.startswith("win32"):
-			style3.setText(style3.text() + " (Default)")  # On Windows operating systems, mark "Windows Vista" as the default style
+			style3.setText(
+				style3.text() + " (" + lang.TR_DEFAULT + ")")  # On Windows operating systems, mark "Windows Vista" as the default style
 		else:
-			style1.setText(style1.text() + " (Default)")  # On non-Windows operating systems, mark "Fusion" as the default style
+			style1.setText(style1.text() + " (" + lang.TR_DEFAULT + ")")  # On non-Windows operating systems, mark "Fusion" as the default style
 
 		# TODO: Reset layout of window to default?
 		# resetPlacement = self.menuItem(None, "Reset Window Layout", "Reset the window layout to default")
-		colorPicker = self.menuItem(QColorDialog.getColor, "Color Picker")
+		colorPicker = self.menuItem(QColorDialog.getColor, lang.TR_COLR_PKR)
 
 		# Make menus
-		fileMenu = mainMenu.addMenu("&File")
-		editMenu = mainMenu.addMenu("&Edit")
-		viewMenu = mainMenu.addMenu("&View")
+		fileMenu = mainMenu.addMenu(lang.TR_MAINMENU_FILE)
+		editMenu = mainMenu.addMenu(lang.TR_MAINMENU_EDIT)
+		viewMenu = mainMenu.addMenu(lang.TR_MAINMENU_VIEW)
 
-		styleMenu = viewMenu.addMenu("&Styles")
-		layoutMenu = viewMenu.addMenu("&Layout")
+		styleMenu = viewMenu.addMenu(lang.TR_VIEWMENU_STYLES)
+		layoutMenu = viewMenu.addMenu(lang.TR_VIEWMENU_LAYOUT)
 
 		# Add actions to menus
 		# fileMenu.addAction(self.actQuit)
@@ -341,6 +206,7 @@ class window(QMainWindow):
 		styleMenu.addAction(style3)
 		styleMenu.addAction(style4)
 
+	# TODO: move to MainToolBar.py
 	# noinspection PyArgumentList
 	def makePageBar(self):
 		"""	Move all of the code for the contents of the pageBar out of the __init__ """
