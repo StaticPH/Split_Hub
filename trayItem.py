@@ -11,12 +11,13 @@ class trayItem(QSystemTrayIcon):
 		super(trayItem, self).__init__()
 
 		self.setParent(parent)
-		print("trayItem's parent is : " + str(self.parent.__name__) + "\t" + str(self.parent()))
+		print('trayItem\'s parent is : ' + str(self.parent.__name__) + '\t' + str(self.parent()))
 		self.setIcon(QIcon(icon))
-		self.setToolTip("Switchboard")
+		self.setToolTip(tr.TR_APPNAME)
 
 		context = self.rightClickResponse()
 		self.setContextMenu(context)
+		# noinspection PyUnresolvedReferences
 		self.activated.connect(self.clickRestraint)
 
 	# Be sure that right clicking properly brings up the context menu, rather than triggering the same response as a left click

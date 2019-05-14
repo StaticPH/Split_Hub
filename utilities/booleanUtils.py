@@ -1,14 +1,14 @@
-extendedTruths = [1, "1", "t", "true", "y", "yes"]
-extendedFalsehoods = [0, "0", "f", "false", "n", "no"]
+extendedTruths = [1, '1', 't', 'true', 'y', 'yes']
+extendedFalsehoods = [0, '0', 'f', 'false', 'n', 'no']
 extendedBools = extendedTruths + extendedFalsehoods
 
 # Converts extendedBools to standard bools. Returns -1 for values not in extendedBools
 # def correctBoolean (var):
 # 	if (var == True) or (var in extendedTruths) or (str(var).capitalize() in extendedTruths):
-# 		# print(str(var) + " evaluated to: " + str(True))
+# 		# print(str(var) + ' evaluated to: ' + str(True))
 # 		return True
 # 	elif (var == False) or (var in extendedFalsehoods) or (str(var).capitalize() in extendedFalsehoods):
-# 		# print(str(var) + " evaluated to: " + str(False))
+# 		# print(str(var) + ' evaluated to: ' + str(False))
 # 		return False
 # 	else:
 # 		#In some cases, the value assigned to a setting for 'True' is actually an integer greater than 1.
@@ -19,7 +19,7 @@ extendedBools = extendedTruths + extendedFalsehoods
 # 			elif int(var) == 0: return False
 # 		except:
 # 			pass
-# 		# print(str(var) + " evaluated to: " + str(-1) +".\nValue should be corrected.")
+# 		# print(str(var) + ' evaluated to: ' + str(-1) +'.\nValue should be corrected.')
 # 		return -1
 
 def isUsableAsBoolean(choice, allowAnyFloat: bool = False):
@@ -39,7 +39,7 @@ def isUsableAsBoolean(choice, allowAnyFloat: bool = False):
 		pass
 	return False
 
-def correctBoolean(choice: str, allowNonZeroAsTrue = False, returnForInvalid = -1):
+def correctBoolean(choice: str, allowNonZeroAsTrue: bool = False, returnForInvalid = -1):
 	choice = str(choice)  # In case a boolean or int mistakenly gets passed in
 	if choice.lower() in ('true', 't', 'yes', 'y', '1'):
 		return True
@@ -53,11 +53,11 @@ def correctBoolean(choice: str, allowNonZeroAsTrue = False, returnForInvalid = -
 			else:
 				return False
 		except (TypeError, ValueError, BytesWarning):
-			print('String `' + choice + "` cannot be equated to a boolean value.")
-			print("Returning " + str(returnForInvalid))
+			print('String `' + choice + '` cannot be equated to a boolean value.')
+			print('Returning ' + str(returnForInvalid))
 			return returnForInvalid
 
-def negate(boolean): return not boolean
+def negate(boolean: bool): return not boolean
 
 def isTruth(var): return correctBoolean(var)
 

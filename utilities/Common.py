@@ -1,6 +1,8 @@
 from typing import Any
 
-validStyles = ["Windows", "Windowsxp", "Windowsvista", "Fusion"]  # TODO: check which styles actually exist on non win32 machines.
+funcType = type(lambda: None)
+
+validStyles = ['Windows', 'Windowsxp', 'Windowsvista', 'Fusion']  # TODO: check which styles actually exist on non win32 machines.
 defaultWindowGeometry = b'\x04\xb0\x00\x00\x02\xd7\x00\x00\x02\xbd\x00\x00\x00\xe4\x00\x00\x04\xb0\x00\x00\x02\xd7\x00\x00\x00\x00\x00\x00\x00\x00\x07\x80'
 
 # settingsList = []
@@ -20,7 +22,7 @@ defaultWindowGeometry = b'\x04\xb0\x00\x00\x02\xd7\x00\x00\x02\xbd\x00\x00\x00\x
 
 # Temp
 # import customLogging
-# customLogging.trivialLog("BLABLAHBALAHABKADNLSDL")
+# customLogging.trivialLog('Testing 1,2,3')
 class wrapper(object):
 	def __init__(self, func, *args):
 		self.func = func
@@ -29,7 +31,7 @@ class wrapper(object):
 	def call(self):
 		return self.func(*self.args)
 
-def testPrint(text = "Debug"):
+def testPrint(text = 'Debug'):
 	print(text)
 
 def isInt(number: Any) -> bool:
