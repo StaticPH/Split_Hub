@@ -7,8 +7,10 @@ from PyQt5.QtCore import Qt
 
 from functools import partial
 
+from MainMenu import mainMenu
 from MainToolBar import mainToolBar
 from utilities.Common import *
+from utilities.QtHelpers import setStyleFromString, setAppStyleFromString
 from utilities.builders import *
 from utilities import translations as lang
 
@@ -23,9 +25,11 @@ enableTrivials = False
 class window(QMainWindow):
 	def __init__(self):
 		super(window, self).__init__()
+		print(self.parent())
+		print(self.parentWidget())
 		self.setObjectName('Mother Window')  # print('I am the '+ self.objectName())
 		self.setAttribute(Qt.WA_QuitOnClose, True)  # TODO:Ensures that closing the main window also closes the preferences window
-		self.declareGeneralActions()
+		# self.declareGeneralActions()
 		self.createPartials()
 
 		'''System-wide clipboard'''
@@ -58,7 +62,7 @@ class window(QMainWindow):
 
 		'''Sets the window style to the configured value'''
 		style = str(self.settings.value('Style_Options/primaryStyle')).replace(' ', '')
-		self.setStyleFromString(style)
+		setAppStyleFromString(style)
 
 		self.setStatusBar(QStatusBar(self))
 		# self.XY = QLabel(
@@ -66,7 +70,7 @@ class window(QMainWindow):
 		# # self.statusBar.addPermanentWidget(self.XY)
 		# QStatusBar.addPermanentWidget(self.statusBar(), self.XY)
 
-		self.clearClipboardButton = self.clickButton(lang.TR_CLR_CLIP, wrapper(self.clip.clear))  # Button which clears the system clipboard
+		self.clearClipboardButton = self.clickButton(lang.TR_CLR_CLIP, lambda: self.clip.clear)  # Button which clears the system clipboard
 		# if enableTrivials: print(self.clip.text())#print clipboard text
 
 		self.setupTopMenu()
@@ -96,20 +100,20 @@ class window(QMainWindow):
 			self.restoreGeometry(defaultWindowGeometry)
 
 	# noinspection PyUnresolvedReferences
-	def declareGeneralActions(self):  # WIP
-		"""Declare application wide Actions"""
-
-		'''Cut'''
-		# def Link(): wrapper(print, 'Cut').call()
-		self.actCut = createAction(self, lang.TR_ACT_CUT, lambda: print('Cut'), 'Ctrl+X')
-
-		'''Copy'''
-		# def Link(): wrapper(print, 'Copy').call()
-		self.actCopy = createAction(self, lang.TR_ACT_COPY, lambda: print('Copy'), 'Ctrl+C')
-
-		'''Paste'''
-		# def Link(): wrapper(print, 'Paste').call()
-		self.actPaste = createAction(self, lang.TR_ACT_PASTE, lambda: print('Paste'), 'Ctrl+v')
+	# def declareGeneralActions(self):  # WIP
+	# 	"""Declare application wide Actions"""
+	#
+	# 	'''Cut'''
+	# 	# def Link(): wrapper(print, 'Cut').call()
+	# 	self.actCut = createAction(self, lang.TR_ACT_CUT, lambda: print('Cut'), 'Ctrl+X')
+	#
+	# 	'''Copy'''
+	# 	# def Link(): wrapper(print, 'Copy').call()
+	# 	self.actCopy = createAction(self, lang.TR_ACT_COPY, lambda: print('Copy'), 'Ctrl+C')
+	#
+	# 	'''Paste'''
+	# 	# def Link(): wrapper(print, 'Paste').call()
+	# 	self.actPaste = createAction(self, lang.TR_ACT_PASTE, lambda: print('Paste'), 'Ctrl+v')
 
 	def createPartials(self):
 		self.clickButton = partial(clickButton, self)
@@ -117,79 +121,19 @@ class window(QMainWindow):
 		self.basicCheckBox = partial(basicCheckBox, self)
 		self.menuItem = partial(menuItem, self)
 
-	def setStyleFromString(self, styleName: str): self.setStyle(QStyleFactory.create(styleName))
-
 	# MAYBE: REFACTOR
 	def setupTopMenu(self):
 		"""Add menus and populate them with actions"""
 		config = self.settings  # ; self.statusBar()
-		mainMenu = self.menuBar()
+		# mainMenu = self.menuBar()
 
-		# Make menu items
-		# prefs = self.menuItem(self.settingsMan.show, 'Preferences', 'View and edit application settings')
-		# prefs.setMenuRole(QAction.PreferencesRole)
-		styleGroup = QActionGroup(mainMenu)
-		windows = wrapper(self.setStyleFromString, 'Windows')
-		winVista = wrapper(self.setStyleFromString, 'Windowsvista')
-		winXP = wrapper(self.setStyleFromString, 'Windowsxp')
-		fusion = wrapper(self.setStyleFromString, 'Fusion')
-		# TODO:only add a menu item if its name is in QStyleFactory.keys()
-		style1 = self.menuItem(
-				fusion, lang.TR_STYLEMENU_FUSION, lang.TR_STYLEMENU_FUSION_TOOLTIP,
-				isToggle = True, group = styleGroup
-		)
-		style2 = self.menuItem(
-				windows, lang.TR_STYLEMENU_WINDOWS, lang.TR_STYLEMENU_WINDOWS_TOOLTIP,
-				isToggle = True, group = styleGroup
-		)
-		style3 = self.menuItem(
-				winVista, lang.TR_STYLEMENU_VISTA, lang.TR_STYLEMENU_VISTA_TOOLTIP,
-				isToggle = True, group = styleGroup
-		)
-		style4 = self.menuItem(
-				winXP, lang.TR_STYLEMENU_XP, lang.TR_STYLEMENU_XP_TOOLTIP,
-				isToggle = True, group = styleGroup
-		)
+		self.setMenuBar(mainMenu(self))
 
 		# Makes sure that the configured style appears as checked on load
-		for style in styleGroup.actions():
+		for style in self.menuBar().styleGroup.actions():
 			# print('style: '+str(style.text()).capitalize().replace(' ', '') + '	setting: '+config.value('Style_Options/primaryStyle'))
 			if (str(style.text()).capitalize().replace(' ', '')) == config.value('Style_Options/primaryStyle').capitalize().replace(' ', ''):
 				style.setChecked(True)
-		if sys.platform.startswith('win32'):
-			style3.setText(
-					style3.text() + ' (' + lang.TR_DEFAULT + ')')  # On Windows operating systems, mark 'Windows Vista' as the default style
-		else:
-			style1.setText(style1.text() + ' (' + lang.TR_DEFAULT + ')')  # On non-Windows operating systems, mark 'Fusion' as the default style
-
-		# TODO: Reset layout of window to default?
-		# resetPlacement = self.menuItem(None, 'Reset Window Layout', 'Reset the window layout to default')
-		colorPicker = self.menuItem(QColorDialog.getColor, lang.TR_COLR_PKR)
-
-		# Make menus
-		fileMenu = mainMenu.addMenu(lang.TR_MAINMENU_FILE)
-		editMenu = mainMenu.addMenu(lang.TR_MAINMENU_EDIT)
-		viewMenu = mainMenu.addMenu(lang.TR_MAINMENU_VIEW)
-
-		styleMenu = viewMenu.addMenu(lang.TR_VIEWMENU_STYLES)
-		layoutMenu = viewMenu.addMenu(lang.TR_VIEWMENU_LAYOUT)
-
-		# Add actions to menus
-		# fileMenu.addAction(self.actQuit)
-		# fileMenu.addAction(prefs)
-
-		editMenu.addAction(self.actCopy)
-		editMenu.addAction(self.actCut)
-		editMenu.addAction(self.actPaste)
-
-		viewMenu.addAction(colorPicker)
-
-		layoutMenu.addAction(self.menuItem(lambda: print('Something in layout menu'), None))  # TODO:give meaningful functions later
-
-		styleMenu.addAction(style1)
-		styleMenu.addAction(style2)
-		styleMenu.addAction(style3)
-		styleMenu.addAction(style4)
 
 	# TODO: move to MainToolBar.py
 	# noinspection PyArgumentList

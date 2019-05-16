@@ -1,7 +1,8 @@
+import sys
 from typing import Any
-# I cant help but wonder how much overhead is added by including QObject solely for type hinting
+# I cant help but wonder how much overhead is added by including QObject and QWidget solely for type hinting
 from PyQt5.QtCore import QObject, Qt, pyqtSignal
-from PyQt5.QtWidgets import QAction, QLayout
+from PyQt5.QtWidgets import QAction, QLayout, QStyleFactory, QWidget, QApplication
 
 from utilities.Common import wrapper
 
@@ -60,7 +61,7 @@ def setStateChangedResponse(obj: QObject, func: Any, errMsgHead: str = None):
 	"""
 	_func = funcLink(func)
 	if _func is not None:
-		obj.statechanged.connect(_func)
+		obj.stateChanged.connect(_func)
 	else:
 		if errMsgHead is None:
 			print('A functionless object has changed states.')
@@ -86,3 +87,44 @@ def setSignalResponse(obj: QObject, signal: pyqtSignal, func: Any, errMsgHead: s
 			print(errMsgHead + ' has no function')
 
 def layoutContents(layout: QLayout): return (layout.itemAt(i) for i in range(layout.count()))
+
+def setStyleFromString(widget: QWidget, styleName: str):
+	widget.setStyle(QStyleFactory.create(styleName))
+
+def setAppStyleFromString(styleName: str):
+	print('styleName: ', styleName)
+	try:
+		QApplication.instance().setStyle(QStyleFactory.create(styleName))
+	except AttributeError:
+		print('No QApplication object exists.', file = sys.stderr)
+
+# def stdMainSetup(appName: str, widgetType: QWidget or None, layout: QLayout) -> (QApplication, QWidget):
+# 	import sys
+# 	app = QApplication(sys.argv)
+# 	app.setApplicationName(appName)
+#
+# 	display = QWidget() if widgetType is None else widgetType  # .__call__()
+#
+# 	actQuit = QAction('&Quit', display)
+# 	actQuit.setShortcut('Ctrl+q')
+# 	actQuit.triggered.connect(sys.exit)
+# 	display.addAction(actQuit)
+#
+# 	display.setLayout(layout)
+# 	display.show()
+# 	return (app, display)
+
+def stdMainSetup(appName: str, widgetType: QWidget or None) -> QWidget:  # (QApplication, QWidget):
+	QApplication.instance().setApplicationName(appName)
+
+	display = QWidget() if widgetType is None else widgetType  # .__call__()
+
+	actQuit = QAction('&Quit', display)
+	actQuit.setShortcut('Ctrl+q')
+	actQuit.triggered.connect(sys.exit)
+	display.addAction(actQuit)
+
+	# display.setLayout(layout)
+	# display.show()
+	# return (_app, display)
+	return display

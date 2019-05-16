@@ -9,7 +9,7 @@ from utilities.builders import createAction2, toolBar_Text, toolBar_Icon
 from utilities import translations as tr
 
 # noinspection PyAttributeOutsideInit
-class mainToolBar(QToolBar):
+class mainToolBar(QToolBar):  # may or may not have been better off with a QDockWidget
 	def __init__(self, parent = None):
 		super(mainToolBar, self).__init__()
 		self.setParent(parent)
