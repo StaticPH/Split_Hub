@@ -1,8 +1,8 @@
 import sys
 from typing import Any
-# I cant help but wonder how much overhead is added by including QObject and QWidget solely for type hinting
+# I cant help but wonder how much overhead is added by including QObject, pyqtSignal, and QWidget solely for type hinting
 from PyQt5.QtCore import QObject, Qt, pyqtSignal
-from PyQt5.QtWidgets import QAction, QLayout, QStyleFactory, QWidget, QApplication
+from PyQt5.QtWidgets import QAction, QLayout, QStyleFactory, QWidget, QApplication, QMainWindow
 
 from utilities.Common import wrapper
 
@@ -114,15 +114,24 @@ def setAppStyleFromString(styleName: str):
 # 	display.show()
 # 	return (app, display)
 
-def stdMainSetup(appName: str, widgetType: QWidget or None) -> QWidget:  # (QApplication, QWidget):
+def stdMainSetup(appName: str, widgetType: QWidget or None) -> QMainWindow or QWidget:  # (QApplication, QWidget):
 	QApplication.instance().setApplicationName(appName)
 
-	display = QWidget() if widgetType is None else widgetType  # .__call__()
-
+	display = QMainWindow() if widgetType is None else widgetType  # .__call__()
 	actQuit = QAction('&Quit', display)
 	actQuit.setShortcut('Ctrl+q')
 	actQuit.triggered.connect(sys.exit)
 	display.addAction(actQuit)
+
+	# display.setWindowFlags(Qt.Window)
+
+	#It's unfortunate that none of these seem to account for the space taken up by the Windows taskbar when it's not set to hidden/autohide
+	# from PyQt5.QtGui import QGuiApplication
+	# print(QGuiApplication.primaryScreen().availableVirtualSize())
+	# print(QGuiApplication.primaryScreen().availableSize())
+	# print(QGuiApplication.primaryScreen().availableVirtualGeometry())
+	# print(QGuiApplication.primaryScreen().availableGeometry())
+	# display.setMaximumSize()
 
 	# display.setLayout(layout)
 	# display.show()

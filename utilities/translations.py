@@ -7,6 +7,8 @@
 
 from PyQt5.QtCore import QCoreApplication
 
+from utilities.Common import gen__All__
+
 tr = QCoreApplication.translate
 
 TR_APPNAME = tr('application name', 'ControlHub')
@@ -70,3 +72,8 @@ TR_TOOLBAR_DOCKMODE_STIP = tr('Toolbar Mode StatusTip', 'Lock(/unlock(dock/undoc
 TR_TOOLBAR_FLOATMODE_STIP = tr('Toolbar Mode StatusTip', 'Enable/disable floating the toolbar as a separate window')
 TR_TOOLBAR_FLOATMODE_TTIP = tr('Toolbar Mode ToolTip', 'NOTE: Disabling does not automatically unfloat the toolbar.\n' +
 							   'Moving the toolbar a little bit will unfloat it and return it to its docked position in the window.')
+
+
+__all__ = gen__All__(locals(), ['tr', 'QCoreApplication'])
+if __name__ == '__main__':
+	print('__all__ = ', __all__)

@@ -8,7 +8,8 @@ from utilities.QtHelpers import setTriggerResponse, setClickedResponse, setState
 
 # TODO: limit to use EITHER toolTip OR statusTip, but not both at once
 
-def createAction(parent: QObject, name: str, func, shortcut: str = None) -> QAction:
+def createAction(parent: QObject or None, name: str, func, shortcut: str = None,
+				 sContext:Qt.ShortcutContext=Qt.WindowShortcut) -> QAction:
 	"""Generate and return a QAction with a name and connected function.\\\n
 	Shortcuts snd a mnemonic can also be specified.
 
@@ -29,11 +30,16 @@ def createAction(parent: QObject, name: str, func, shortcut: str = None) -> QAct
 		 	``'Ctrl+v'``\\\n
 		 	``'Ctrl+Alt+0'``\\\n
 		 	``'Alt+Shift+U'``\\\n
+	**sContext:**
+		What context the shortcut is valid in.
 	"""
 	act = QAction(name)
-	act.setParent(parent)
+	if parent is not None:
+		act.setParent(parent)
 	if shortcut is not None:  # Technically act.setShortcut can be called even if shortcut is None, but just to be safe...
 		act.setShortcut(shortcut)
+		if sContext is not None:
+			act.setShortcutContext(sContext)
 
 	# if isinstance(func, wrapper):
 	# 	def link():
@@ -48,8 +54,8 @@ def createAction(parent: QObject, name: str, func, shortcut: str = None) -> QAct
 	return act
 
 # TODO: FIND SOMETHING BETTER FOR DOCSTRINGS
-def createAction2(parent: QObject, name: str, func,
-				  shortcut: str = None, icon: QIcon = QIcon(None),
+def createAction2(parent: QObject or None, name: str, func, shortcut: str = None,
+				  sContext:Qt.ShortcutContext=Qt.WindowShortcut, icon: QIcon = QIcon(None),
 				  toolTip: str = None, statusTip: str = None, isCheckable: bool = None) -> QAction:
 	"""Generate and return a QAction intended to be visually added to a GUI.\\\n
 	====
@@ -71,6 +77,8 @@ def createAction2(parent: QObject, name: str, func,
 		 	``'Ctrl+v'``\\\n
 		 	``'Ctrl+Alt+0'``\\\n
 		 	``'Alt+Shift+U'``\\\n
+	**sContext:**
+		What context the shortcut is valid in.
 	**icon:**
 		An icon to display with the QAction. Accepted default of ``QIcon(None)``.
 	**toolTip:**
@@ -81,7 +89,7 @@ def createAction2(parent: QObject, name: str, func,
 	**isCheckable:**
 		Whether this QAction should display with a visible marking to indicate its state.
 	"""
-	act = createAction(parent, name, func, shortcut)
+	act = createAction(parent, name, func, shortcut, sContext)
 
 	if icon is None:
 		act.setIcon(QIcon(None))
@@ -94,6 +102,9 @@ def createAction2(parent: QObject, name: str, func,
 		act.setToolTip(toolTip)
 	if isCheckable is not None:
 		act.setCheckable(isCheckable)
+
+	# if shortcut	is not None:
+	# 	act.setShortcutVisibleInContextMenu(True)
 
 	return act
 

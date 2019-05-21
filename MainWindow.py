@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import (
 	QApplication, QWidget,
 	QMainWindow, QVBoxLayout, QTabWidget,
-	QActionGroup, QStatusBar, QColorDialog, QStyleFactory
+	QStatusBar, QStyleFactory
 )
 from PyQt5.QtCore import Qt
 
@@ -10,7 +10,7 @@ from functools import partial
 from MainMenu import mainMenu
 from MainToolBar import mainToolBar
 from utilities.Common import *
-from utilities.QtHelpers import setStyleFromString, setAppStyleFromString
+from utilities.QtHelpers import setAppStyleFromString
 from utilities.builders import *
 from utilities import translations as lang
 
@@ -64,6 +64,10 @@ class window(QMainWindow):
 		style = str(self.settings.value('Style_Options/primaryStyle')).replace(' ', '')
 		setAppStyleFromString(style)
 
+		#TODO: set font used for app UI
+		# QFont uiFont('monospace')
+		# self.setFont(uiFont) or QGuiApplication.setFont(uiFont)? maybe something like QGuiApplication.instance()?
+
 		self.setStatusBar(QStatusBar(self))
 		# self.XY = QLabel(
 		# 		'Cursor:')  # TODO: Make this come with something to display the numerical position of the cursor; might involve the timerEvent of QStatusBar
@@ -83,6 +87,8 @@ class window(QMainWindow):
 
 		self.pageBar = self.makePageBar()
 		self.mainToolBar.addWidget(self.pageBar)
+
+		self.setMinimumSize(160,40)# Top level windows with decoration should be at least 160×40 (else, a warning will appear on Windows 8).
 
 		# Maybe: It might be good to move this if/else block to whatever will eventually be responsible for reloading/refreshing MainWindow's settings
 		if self.settings.value('mainWindowGeometry'):
@@ -129,7 +135,7 @@ class window(QMainWindow):
 
 		self.setMenuBar(mainMenu(self))
 
-		# Makes sure that the configured style appears as checked on load
+		# FIXME Makes sure that the configured style appears as checked on load
 		for style in self.menuBar().styleGroup.actions():
 			# print('style: '+str(style.text()).capitalize().replace(' ', '') + '	setting: '+config.value('Style_Options/primaryStyle'))
 			if (str(style.text()).capitalize().replace(' ', '')) == config.value('Style_Options/primaryStyle').capitalize().replace(' ', ''):
@@ -176,6 +182,10 @@ if __name__ == '__main__':
 
 	display = window()
 	display.show()
+	print(app.testAttribute(Qt.AA_DontShowShortcutsInContextMenus))
+	app.setAttribute(Qt.AA_DontShowShortcutsInContextMenus, True)
+	print(app.testAttribute(Qt.AA_DontShowShortcutsInContextMenus))
+	app.beep()
 
 	# Proof of concept for adding a method to ALL instances of a class defined by a python language binding. also works for those NOT defined by a binding.
 	# Even adds the new method to the __dict__ entry for the target class! though if you want to check that it's available to an object that extends that class, you'd need to call dir(<OBJECT>) and look through the results; it'll be there!

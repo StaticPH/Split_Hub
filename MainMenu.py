@@ -3,10 +3,12 @@ from functools import partial
 
 from PyQt5.QtWidgets import QMenuBar, QActionGroup, QColorDialog, QStyleFactory
 
+# noinspection PyUnresolvedReferences
 from utilities import translations as tr
 from utilities.Common import wrapper
 from utilities.QtHelpers import setAppStyleFromString
-from utilities.builders import menuItem, basicCheckBox, triggerButton, clickButton, createAction
+from utilities.builders import menuItem, basicCheckBox, triggerButton, clickButton
+from Actions import *
 
 class mainMenu(QMenuBar):
 	def __init__(self, parent = None):
@@ -15,9 +17,9 @@ class mainMenu(QMenuBar):
 		# If they should, then don't set the parent, and just share the menu between individual windows.
 		self.setParent(parent if parent is not None else None)  # This SHOULD be the same as just blindly setting it, but I need to confirm
 		self.createPartials()
-		self.declareGeneralActions()
+		# self.declareGeneralActions()
 
-		# Make menus
+		'''Make menus'''
 		self.fileMenu = self.addMenu(tr.TR_MAINMENU_FILE)
 		self.editMenu = self.addMenu(tr.TR_MAINMENU_EDIT)
 		self.viewMenu = self.addMenu(tr.TR_MAINMENU_VIEW)
@@ -25,10 +27,9 @@ class mainMenu(QMenuBar):
 		self.styleMenu = self.viewMenu.addMenu(tr.TR_VIEWMENU_STYLES)
 		self.layoutMenu = self.viewMenu.addMenu(tr.TR_VIEWMENU_LAYOUT)
 
-		# Make any groups that need to be externally accessible
+		'''Make any groups that need to be externally accessible by making them class members'''
 		self.styleGroup = QActionGroup(self)
 
-		# Fully populate the main menu
 		self.populateMenus()
 
 	# noinspection PyAttributeOutsideInit
@@ -36,24 +37,6 @@ class mainMenu(QMenuBar):
 		self.clickButton = partial(clickButton, self)
 		self.triggerButton = partial(triggerButton, self)
 		self.basicCheckBox = partial(basicCheckBox, self)
-
-	# self.menuItem = partial(menuItem, self)
-
-	# noinspection PyAttributeOutsideInit
-	def declareGeneralActions(self):  # WIP
-		"""Declare application wide Actions"""
-
-		'''Cut'''
-		# def Link(): wrapper(print, 'Cut').call()
-		self.actCut = createAction(self, tr.TR_ACT_CUT, lambda: print('Cut'), 'Ctrl+X')
-
-		'''Copy'''
-		# def Link(): wrapper(print, 'Copy').call()
-		self.actCopy = createAction(self, tr.TR_ACT_COPY, lambda: print('Copy'), 'Ctrl+C')
-
-		'''Paste'''
-		# def Link(): wrapper(print, 'Paste').call()
-		self.actPaste = createAction(self, tr.TR_ACT_PASTE, lambda: print('Paste'), 'Ctrl+v')
 
 	def populateFileMenu(self):
 		# prefs = menuItem(self, self.settingsMan.show, tr.TR_FILEMENU_PREFS, tr.TR_FILEMENU_PREFS_STIP)
@@ -64,9 +47,12 @@ class mainMenu(QMenuBar):
 		pass
 
 	def populateEditMenu(self):
-		self.editMenu.addAction(self.actCopy)
-		self.editMenu.addAction(self.actCut)
-		self.editMenu.addAction(self.actPaste)
+		# actCopy.setParent(self.parent())
+		# actCut.setParent(self.parent())
+		# actPaste.setParent(self.parent())
+		self.editMenu.addAction(actCopy)
+		self.editMenu.addAction(actCut)
+		self.editMenu.addAction(actPaste)
 
 	def populateViewMenu(self):
 		colorPicker = menuItem(self, QColorDialog.getColor, tr.TR_COLR_PKR)
@@ -110,6 +96,7 @@ class mainMenu(QMenuBar):
 		self.layoutMenu.addAction(menuItem(self, lambda: print('Something in layout menu'), str(None)))
 
 	def populateMenus(self):
+		""" Fully populate the main menu and any/all of its sub-menus. """
 		self.populateFileMenu()
 		self.populateEditMenu()
 		self.populateViewMenu()
@@ -117,7 +104,7 @@ class mainMenu(QMenuBar):
 		self.populateLayoutMenu()
 
 if __name__ == '__main__':
-	from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton
+	from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMainWindow
 	from utilities.QtHelpers import stdMainSetup
 
 	app = QApplication(sys.argv)
@@ -125,12 +112,9 @@ if __name__ == '__main__':
 	btn = QPushButton('button')
 	btn.setToolTip('tooltip')
 
-	lay = QVBoxLayout()
-	lay.addWidget(mainMenu())
-	lay.addWidget(btn)
-
-	win = stdMainSetup('MainMenu', QWidget())
-	win.setLayout(lay)
+	win = stdMainSetup('MainMenu', QMainWindow())
+	win.setMenuBar(mainMenu(win))
+	win.setCentralWidget(btn)
 	win.show()
 
 	sys.exit(app.exec_())

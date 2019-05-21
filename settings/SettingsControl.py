@@ -1,4 +1,4 @@
-from PyQt5.QtCore import (Qt, QSettings, QObject, QByteArray)  # QObject and QByteArray not currently used
+from PyQt5.QtCore import (Qt, QSettings, QObject, QByteArray)
 from PyQt5.QtWidgets import (
 	QPushButton, QLineEdit, QDialog, QDialogButtonBox, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox
 )
@@ -12,6 +12,8 @@ from utilities.booleanUtils import isUsableAsBoolean, correctBoolean, isTruth
 
 warnings.warn('Interpreting SettingsControl')
 enableTrivials = False
+
+#TODO: When receiving the signal that the settings have been modified, set Qt::WA_WindowModified
 
 # Section####################################### Start Settings Handling ###############################################
 # noinspection PyGlobalUndefined
@@ -66,7 +68,7 @@ class settingsManager(QDialog):
 		'''	Style Configs	'''  # FIXME, I DONT DO ANYTHING RIGHT NOW
 		config.beginGroup('Style_Options')
 		cfgStyle = config.value('primaryStyle')
-		if (cfgStyle is None) or (cfgStyle.capitalize().replace(' ', '') not in validStyles):
+		if (cfgStyle is None):# or (cfgStyle.capitalize().replace(' ', '') not in validStyles):
 			if sys.platform.startswith('win32'):
 				config.setValue('primaryStyle', 'Windows Vista')
 			else:

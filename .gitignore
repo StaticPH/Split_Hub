@@ -1,0 +1,80 @@
+###################################
+## General .gitignore stuff
+###################################
+
+cache/
+tmp/
+*.bak
+*.log
+*.pydevproject
+*.tmp
+
+##########################
+## Windows detritus
+##########################
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Mac crap
+.DS_Store
+
+
+#############
+## Python
+#############
+
+*.py[cod]
+
+# Packages
+*.egg
+*.egg-info
+dist/
+build/
+eggs/
+parts/
+var/
+venv/
+sdist/
+develop-eggs/
+.installed.cfg
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+
+#Translations
+*.mo
+
+#################
+##IDEA files
+#################
+.idea/**
+/*.iml
+/*.ipr
+/*.iws
+
+#############################
+##Manual version override
+#############################
+version.properties
+
+##########################
+##Project Specific
+##########################
+#Line beginning with !/ means that if that directory was previously excluded, include it now
+#Line ending in /** means exclude this directory and everything it includes
+
+disregard/
+__pycache__/**
+*.txt
